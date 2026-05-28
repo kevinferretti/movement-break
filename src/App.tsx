@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, BarChart3, Check, Code, RefreshCw, RotateCcw, X } from 'lucide-react'
+import { Activity, BarChart3, Check, Code, Hash, RefreshCw, RotateCcw, Settings, X } from 'lucide-react'
 import './App.css'
+import { normalizePreferences, type MovementPreferences } from './domain/preferences'
 import { AVAILABLE_REPS } from './domain/reps'
 import { buildDailyTotals, createMovementEntry, summarizeEntries, type MovementEntry } from './domain/stats'
 import { APP_UPDATE_AVAILABLE_EVENT, type AppUpdateAvailableEvent } from './lib/appUpdates'
-import { loadEntries, saveEntries } from './lib/storage'
+import { loadEntries, loadPreferences, saveEntries, savePreferences } from './lib/storage'
 
 type Notice = {
   tone: 'neutral' | 'success'
@@ -14,8 +15,21 @@ type Notice = {
 const SOURCE_URL = 'https://github.com/kevinferretti/movement-break'
 const FALLBACK_REPS = 1
 
+type PreferenceState = {
+  directRepsInput: string
+  preferences: MovementPreferences
+}
+
 function App() {
   const [entries, setEntries] = useState<MovementEntry[]>(() => loadEntries())
+  const [{ preferences, directRepsInput }, setPreferenceState] = useState<PreferenceState>(() => {
+    const preferences = loadPreferences()
+
+    return {
+      directRepsInput: String(preferences.directReps),
+      preferences,
+    }
+  })
   const [rolledReps, setRolledReps] = useState<number | null>(null)
   const [displayReps, setDisplayReps] = useState<number | null>(null)
   const [isRolling, setIsRolling] = useState(false)
@@ -33,6 +47,10 @@ function App() {
   useEffect(() => {
     saveEntries(entries)
   }, [entries])
+
+  useEffect(() => {
+    savePreferences(preferences)
+  }, [preferences])
 
   useEffect(() => {
     function handleUpdateAvailable(event: Event) {
@@ -64,13 +82,24 @@ function App() {
 
       if (ticks >= 12) {
         window.clearInterval(interval)
-        const finalReps = randomRep()
-        setDisplayReps(finalReps)
-        setRolledReps(finalReps)
-        setIsRolling(false)
-        setNotice({ tone: 'success', text: `${finalReps} pushups queued.` })
+        queueReps(randomRep())
       }
     }, 58)
+  }
+
+  function queueDirectReps() {
+    if (isRolling) {
+      return
+    }
+
+    queueReps(preferences.directReps)
+  }
+
+  function queueReps(reps: number) {
+    setDisplayReps(reps)
+    setRolledReps(reps)
+    setIsRolling(false)
+    setNotice({ tone: 'success', text: `${reps} pushups queued.` })
   }
 
   function completeBreak() {
@@ -91,6 +120,29 @@ function App() {
     setRolledReps(null)
     setDisplayReps(null)
     setNotice({ tone: 'neutral', text: 'Skipped this roll.' })
+  }
+
+  function updateDirectRepsInput(value: string) {
+    setPreferenceState((current) => {
+      if (value.trim() === '') {
+        return {
+          ...current,
+          directRepsInput: value,
+        }
+      }
+
+      return {
+        directRepsInput: value,
+        preferences: normalizePreferences({ directReps: Number(value) }, current.preferences),
+      }
+    })
+  }
+
+  function commitDirectRepsInput() {
+    setPreferenceState((current) => ({
+      ...current,
+      directRepsInput: String(current.preferences.directReps),
+    }))
   }
 
   return (
@@ -141,10 +193,16 @@ function App() {
               </button>
             </>
           ) : (
-            <button className="primary-action" type="button" onClick={rollReps} disabled={isRolling}>
-              <RotateCcw size={20} />
-              Roll
-            </button>
+            <>
+              <button className="primary-action" type="button" onClick={rollReps} disabled={isRolling}>
+                <RotateCcw size={20} />
+                Roll
+              </button>
+              <button className="direct-action" type="button" onClick={queueDirectReps} disabled={isRolling}>
+                <Hash size={20} />
+                Set {preferences.directReps}
+              </button>
+            </>
           )}
         </div>
 
@@ -179,6 +237,27 @@ function App() {
                 <strong>{day.reps}</strong>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="settings-panel" aria-labelledby="settings-heading">
+          <div className="section-heading">
+            <Settings size={20} />
+            <h2 id="settings-heading">Settings</h2>
+          </div>
+
+          <div className="setting-row">
+            <label htmlFor="direct-reps">Direct reps</label>
+            <input
+              id="direct-reps"
+              type="number"
+              inputMode="numeric"
+              min="1"
+              max="500"
+              value={directRepsInput}
+              onBlur={commitDirectRepsInput}
+              onChange={(event) => updateDirectRepsInput(event.currentTarget.value)}
+            />
           </div>
         </section>
       </section>

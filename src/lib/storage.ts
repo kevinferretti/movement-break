@@ -1,6 +1,23 @@
+import { createDefaultPreferences, normalizePreferences, type MovementPreferences } from '../domain/preferences'
 import type { MovementEntry } from '../domain/stats'
 
 const ENTRIES_KEY = 'movement-break.entries.v1'
+const PREFERENCES_KEY = 'movement-break.preferences.v1'
+
+export function loadPreferences(): MovementPreferences {
+  const fallback = createDefaultPreferences()
+
+  try {
+    const raw = window.localStorage.getItem(PREFERENCES_KEY)
+    return normalizePreferences(raw ? JSON.parse(raw) : null, fallback)
+  } catch {
+    return fallback
+  }
+}
+
+export function savePreferences(preferences: MovementPreferences) {
+  window.localStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences))
+}
 
 export function loadEntries(): MovementEntry[] {
   try {

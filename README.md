@@ -1,6 +1,6 @@
 # Movement Break
 
-A small PWA for pushup breaks. It stores completion stats locally in the browser.
+A small PWA for pushup breaks. It stores completion stats and personal preferences locally in the browser.
 
 ## Stack
 
@@ -46,6 +46,7 @@ npm run lint         # eslint
 - Pushups only
 - Fixed rep options: `1-10` and `20`
 - Random rep roll
+- Configurable direct rep preset, default `20`
 - Completion logging
 - Today and seven-day stats
 

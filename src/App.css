@@ -181,6 +181,14 @@ button:disabled {
   background: var(--ink);
 }
 
+.direct-action {
+  flex: 1;
+  padding: 0 20px;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--yellow) 34%, var(--paper));
+  border: 1px solid color-mix(in srgb, var(--yellow) 52%, var(--line));
+}
+
 .cancel-action {
   flex: 1;
   padding: 0 20px;
@@ -214,17 +222,46 @@ button:disabled {
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.38fr);
   gap: 18px;
   width: min(100%, 820px);
   margin-inline: auto;
 }
 
-.stats-panel {
+.stats-panel,
+.settings-panel {
   padding: 20px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: color-mix(in srgb, var(--panel) 86%, white);
+}
+
+.setting-row {
+  display: grid;
+  gap: 8px;
+}
+
+.setting-row label {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+input {
+  width: 100%;
+  min-height: 42px;
+  box-sizing: border-box;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 10px;
+  font: inherit;
+  letter-spacing: 0;
+}
+
+input:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--blue) 55%, white);
+  outline-offset: 2px;
 }
 
 .section-heading {
