@@ -1,4 +1,4 @@
-const CACHE_NAME = 'movement-break-shell-v2'
+const CACHE_NAME = 'movement-break-shell-v3'
 const SHELL_ASSETS = ['/', '/manifest.webmanifest', '/icon.svg']
 
 self.addEventListener('install', (event) => {

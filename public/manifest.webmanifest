@@ -1,7 +1,7 @@
 {
   "name": "Movement Break",
   "short_name": "Move Break",
-  "description": "Pushup breaks with configurable reps and local stats.",
+  "description": "Pushup breaks with local stats.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

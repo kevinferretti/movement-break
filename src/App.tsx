@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, BarChart3, Check, Code, RotateCcw, Settings, X } from 'lucide-react'
+import { Activity, BarChart3, Check, Code, RotateCcw, X } from 'lucide-react'
 import './App.css'
-import { normalizeSettings, type MovementSettings } from './domain/settings'
+import { AVAILABLE_REPS, REP_OPTIONS_LABEL } from './domain/reps'
 import { buildDailyTotals, createMovementEntry, summarizeEntries, type MovementEntry } from './domain/stats'
-import { loadEntries, loadSettings, saveEntries, saveSettings } from './lib/storage'
+import { loadEntries, saveEntries } from './lib/storage'
 
 type Notice = {
   tone: 'neutral' | 'success'
@@ -11,12 +11,12 @@ type Notice = {
 }
 
 const SOURCE_URL = 'https://github.com/kevinferretti/movement-break'
+const INITIAL_REPS = AVAILABLE_REPS[AVAILABLE_REPS.length - 1]
 
 function App() {
-  const [settings, setSettings] = useState<MovementSettings>(() => loadSettings())
   const [entries, setEntries] = useState<MovementEntry[]>(() => loadEntries())
   const [rolledReps, setRolledReps] = useState<number | null>(null)
-  const [displayReps, setDisplayReps] = useState(settings.repMax)
+  const [displayReps, setDisplayReps] = useState(INITIAL_REPS)
   const [isRolling, setIsRolling] = useState(false)
   const [completionPulse, setCompletionPulse] = useState(false)
   const [notice, setNotice] = useState<Notice>({
@@ -27,19 +27,10 @@ function App() {
   const summary = useMemo(() => summarizeEntries(entries), [entries])
   const dailyTotals = useMemo(() => buildDailyTotals(entries, 7), [entries])
   const maxDailyReps = Math.max(1, ...dailyTotals.map((day) => day.reps))
-  const visibleReps = Math.min(settings.repMax, Math.max(settings.repMin, displayReps))
-
-  useEffect(() => {
-    saveSettings(settings)
-  }, [settings])
 
   useEffect(() => {
     saveEntries(entries)
   }, [entries])
-
-  function updateSettings(patch: Partial<MovementSettings>) {
-    setSettings((current) => normalizeSettings({ ...current, ...patch }, current))
-  }
 
   function rollReps() {
     if (isRolling) {
@@ -53,11 +44,11 @@ function App() {
     let ticks = 0
     const interval = window.setInterval(() => {
       ticks += 1
-      setDisplayReps(randomRep(settings.repMin, settings.repMax))
+      setDisplayReps(randomRep())
 
       if (ticks >= 12) {
         window.clearInterval(interval)
-        const finalReps = randomRep(settings.repMin, settings.repMax)
+        const finalReps = randomRep()
         setDisplayReps(finalReps)
         setRolledReps(finalReps)
         setIsRolling(false)
@@ -81,7 +72,7 @@ function App() {
 
   function cancelQueuedBreak() {
     setRolledReps(null)
-    setDisplayReps(settings.repMax)
+    setDisplayReps(INITIAL_REPS)
     setNotice({ tone: 'neutral', text: 'Skipped this roll.' })
   }
 
@@ -108,20 +99,25 @@ function App() {
       <section className="break-stage" aria-label="Pushup break">
         <div className="movement-label">
           <span>Pushups</span>
-          <strong>
-            {settings.repMin}-{settings.repMax}
-          </strong>
+          <strong>{REP_OPTIONS_LABEL}</strong>
         </div>
 
         <div className={`rep-dial ${isRolling ? 'rolling' : ''} ${completionPulse ? 'complete' : ''}`}>
-          <span>{visibleReps}</span>
+          <span>{displayReps}</span>
         </div>
 
         <div className={`break-actions ${rolledReps ? 'queued' : 'ready'}`}>
           {rolledReps ? (
             <>
-              <button className="complete-action" type="button" onClick={completeBreak} title="Mark complete" aria-label="Mark complete">
-                <Check size={30} />
+              <button
+                className="complete-action"
+                type="button"
+                onClick={completeBreak}
+                title="Mark complete"
+                aria-label="Mark complete"
+              >
+                <Check size={22} />
+                Mark complete
               </button>
               <button className="cancel-action" type="button" onClick={cancelQueuedBreak}>
                 <X size={20} />
@@ -165,37 +161,6 @@ function App() {
             ))}
           </div>
         </section>
-
-        <section className="settings-panel" aria-labelledby="settings-heading">
-          <div className="section-heading">
-            <Settings size={20} />
-            <h2 id="settings-heading">Settings</h2>
-          </div>
-
-          <div className="setting-row compact">
-            <label htmlFor="rep-min">Rep range</label>
-            <div className="number-pair">
-              <input
-                id="rep-min"
-                type="number"
-                min="1"
-                max="500"
-                value={settings.repMin}
-                onChange={(event) => updateSettings({ repMin: event.currentTarget.valueAsNumber })}
-              />
-              <span>to</span>
-              <input
-                aria-label="Maximum reps"
-                type="number"
-                min="1"
-                max="500"
-                value={settings.repMax}
-                onChange={(event) => updateSettings({ repMax: event.currentTarget.valueAsNumber })}
-              />
-            </div>
-          </div>
-
-        </section>
       </section>
     </main>
   )
@@ -211,12 +176,16 @@ function Metric({ label, value, detail }: { label: string; value: number; detail
   )
 }
 
-function randomRep(min: number, max: number) {
-  const range = max - min + 1
+function randomRep() {
   const values = new Uint32Array(1)
-  window.crypto.getRandomValues(values)
+  const optionCount = AVAILABLE_REPS.length
+  const unbiasedMax = 2 ** 32 - (2 ** 32 % optionCount)
 
-  return min + (values[0] % range)
+  do {
+    window.crypto.getRandomValues(values)
+  } while (values[0] >= unbiasedMax)
+
+  return AVAILABLE_REPS[values[0] % optionCount] ?? INITIAL_REPS
 }
 
 export default App

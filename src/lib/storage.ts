@@ -1,23 +1,6 @@
-import { createDefaultSettings, normalizeSettings, type MovementSettings } from '../domain/settings'
 import type { MovementEntry } from '../domain/stats'
 
-const SETTINGS_KEY = 'movement-break.settings.v1'
 const ENTRIES_KEY = 'movement-break.entries.v1'
-
-export function loadSettings(): MovementSettings {
-  const fallback = createDefaultSettings()
-
-  try {
-    const raw = window.localStorage.getItem(SETTINGS_KEY)
-    return normalizeSettings(raw ? JSON.parse(raw) : null, fallback)
-  } catch {
-    return fallback
-  }
-}
-
-export function saveSettings(settings: MovementSettings) {
-  window.localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
-}
 
 export function loadEntries(): MovementEntry[] {
   try {
