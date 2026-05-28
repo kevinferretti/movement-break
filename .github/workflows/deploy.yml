@@ -19,6 +19,8 @@ env:
   DEPLOY_ROOT: /opt/movement-break
   APP_PORT: '8787'
   CLIENT_ORIGIN: https://movement.kevinferretti.com
+  PUBLIC_URL: https://movement.kevinferretti.com
+  DATA_FILE: /opt/movement-break/shared/data.json
 
 jobs:
   deploy:
@@ -26,6 +28,10 @@ jobs:
     env:
       OVH_SSH_PRIVATE_KEY: ${{ secrets.OVH_SSH_PRIVATE_KEY }}
       OVH_SSH_KNOWN_HOSTS: ${{ secrets.OVH_SSH_KNOWN_HOSTS }}
+      OAUTH_GITHUB_CLIENT_ID: ${{ secrets.GITHUB_CLIENT_ID }}
+      OAUTH_GITHUB_CLIENT_SECRET: ${{ secrets.GITHUB_CLIENT_SECRET }}
+      OAUTH_GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      OAUTH_GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
       DEPLOY_SECRETS_CONFIGURED: ${{ secrets.OVH_SSH_PRIVATE_KEY != '' && secrets.OVH_SSH_KNOWN_HOSTS != '' }}
 
     steps:
@@ -84,6 +90,12 @@ jobs:
           {
             printf 'PORT=%s\n' "$APP_PORT"
             printf 'CLIENT_ORIGIN=%s\n' "$CLIENT_ORIGIN"
+            printf 'PUBLIC_URL=%s\n' "$PUBLIC_URL"
+            printf 'DATA_FILE=%s\n' "$DATA_FILE"
+            printf 'GITHUB_CLIENT_ID=%s\n' "$OAUTH_GITHUB_CLIENT_ID"
+            printf 'GITHUB_CLIENT_SECRET=%s\n' "$OAUTH_GITHUB_CLIENT_SECRET"
+            printf 'GOOGLE_CLIENT_ID=%s\n' "$OAUTH_GOOGLE_CLIENT_ID"
+            printf 'GOOGLE_CLIENT_SECRET=%s\n' "$OAUTH_GOOGLE_CLIENT_SECRET"
           } > movement-break.env
           chmod 600 movement-break.env
 

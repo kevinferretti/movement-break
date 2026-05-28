@@ -7,7 +7,8 @@ A small PWA for pushup breaks. It stores completion stats and personal preferenc
 - Vite, React, TypeScript
 - Express production server
 - Service worker and web app manifest
-- Browser `localStorage` for personal stats
+- Browser `localStorage` for signed-out stats
+- Server-side OAuth sessions and persisted leaderboard stats
 
 ## Local Setup
 
@@ -22,6 +23,8 @@ Create a local environment file:
 ```sh
 Copy-Item .env.example .env
 ```
+
+Google and GitHub login buttons only appear when the matching OAuth client id and secret are set in `.env`.
 
 Run the app:
 
@@ -49,10 +52,27 @@ npm run lint         # eslint
 - Configurable direct rep preset, default `20`
 - Completion logging
 - Today and seven-day stats
+- Google and GitHub login
+- One-time local stat import per account
+- Persistent leaderboard totals
 
 ## Deployment Notes
 
 The frontend needs HTTPS for mobile installation outside local development. Production serves the Vite build through the Express server behind Caddy on OVH.
+
+Production OAuth callback URLs:
+
+```text
+https://movement.kevinferretti.com/api/auth/github/callback
+https://movement.kevinferretti.com/api/auth/google/callback
+```
+
+Local OAuth callback URLs:
+
+```text
+http://localhost:5175/api/auth/github/callback
+http://localhost:5175/api/auth/google/callback
+```
 
 ## Continuous Deployment
 
@@ -63,6 +83,10 @@ Required GitHub repository secrets:
 ```text
 OVH_SSH_PRIVATE_KEY   # private deploy key for ubuntu@movement.kevinferretti.com
 OVH_SSH_KNOWN_HOSTS   # output from: ssh-keyscan -t ed25519 movement.kevinferretti.com
+GITHUB_CLIENT_ID
+GITHUB_CLIENT_SECRET
+GOOGLE_CLIENT_ID
+GOOGLE_CLIENT_SECRET
 ```
 
-The deployed service runs from `/opt/movement-break/current` and is managed by `systemd` as `movement-break`.
+The deployed service runs from `/opt/movement-break/current` and is managed by `systemd` as `movement-break`. Persistent app data is stored in `/opt/movement-break/shared/data.json`.

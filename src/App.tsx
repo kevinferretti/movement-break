@@ -1,14 +1,39 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, BarChart3, Check, Code, RefreshCw, RotateCcw, Settings, X } from 'lucide-react'
+import {
+  Activity,
+  BarChart3,
+  Check,
+  Code,
+  LogIn,
+  LogOut,
+  RefreshCw,
+  RotateCcw,
+  Settings,
+  Trophy,
+  User,
+  X,
+} from 'lucide-react'
 import './App.css'
 import { normalizePreferences, type MovementPreferences } from './domain/preferences'
 import { AVAILABLE_REPS } from './domain/reps'
 import { buildDailyTotals, createMovementEntry, summarizeEntries, type MovementEntry } from './domain/stats'
+import {
+  fetchAuthConfig,
+  fetchCurrentUser,
+  fetchLeaderboard,
+  fetchServerEntries,
+  importLocalEntriesToServer,
+  logOut,
+  logServerEntry,
+  type AuthProvider,
+  type CurrentUser,
+  type LeaderboardRow,
+} from './lib/api'
 import { APP_UPDATE_AVAILABLE_EVENT, type AppUpdateAvailableEvent } from './lib/appUpdates'
 import { loadEntries, loadPreferences, saveEntries, savePreferences } from './lib/storage'
 
 type Notice = {
-  tone: 'neutral' | 'success'
+  tone: 'neutral' | 'success' | 'error'
   text: string
 }
 
@@ -33,7 +58,13 @@ function App() {
   const [rolledReps, setRolledReps] = useState<number | null>(null)
   const [displayReps, setDisplayReps] = useState<number | null>(null)
   const [isRolling, setIsRolling] = useState(false)
+  const [isSavingCompletion, setIsSavingCompletion] = useState(false)
   const [completionPulse, setCompletionPulse] = useState(false)
+  const [authStatus, setAuthStatus] = useState<'loading' | 'ready'>('loading')
+  const [authProviders, setAuthProviders] = useState<AuthProvider[]>([])
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
+  const [leaderboardRows, setLeaderboardRows] = useState<LeaderboardRow[]>([])
+  const [syncNotice, setSyncNotice] = useState('')
   const [refreshUpdate, setRefreshUpdate] = useState<(() => void) | null>(null)
   const [notice, setNotice] = useState<Notice>({
     tone: 'neutral',
@@ -62,6 +93,80 @@ function App() {
 
     return () => {
       window.removeEventListener(APP_UPDATE_AVAILABLE_EVENT, handleUpdateAvailable)
+    }
+  }, [])
+
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadAccount() {
+      try {
+        const [authConfig, session, leaderboard] = await Promise.all([
+          fetchAuthConfig(),
+          fetchCurrentUser(),
+          fetchLeaderboard(),
+        ])
+
+        if (!isMounted) {
+          return
+        }
+
+        setAuthProviders(authConfig.providers)
+        setLeaderboardRows(leaderboard.rows)
+
+        if (!session.user) {
+          setCurrentUser(null)
+          return
+        }
+
+        if (!session.user.importedLocalEntriesAt) {
+          const importResult = await importLocalEntriesToServer(loadEntries())
+
+          if (!isMounted) {
+            return
+          }
+
+          setCurrentUser(importResult.user)
+          setEntries(importResult.entries)
+          setSyncNotice(
+            importResult.importedCount > 0
+              ? `Imported ${importResult.importedCount} local breaks.`
+              : 'Local import locked.',
+          )
+
+          const refreshedLeaderboard = await fetchLeaderboard()
+
+          if (isMounted) {
+            setLeaderboardRows(refreshedLeaderboard.rows)
+          }
+
+          return
+        }
+
+        const serverEntries = await fetchServerEntries()
+
+        if (!isMounted) {
+          return
+        }
+
+        setCurrentUser(session.user)
+        setEntries(serverEntries.entries)
+        setSyncNotice('Local import locked.')
+      } catch (error) {
+        if (isMounted) {
+          setSyncNotice(getErrorMessage(error))
+        }
+      } finally {
+        if (isMounted) {
+          setAuthStatus('ready')
+        }
+      }
+    }
+
+    void loadAccount()
+
+    return () => {
+      isMounted = false
     }
   }, [])
 
@@ -102,18 +207,34 @@ function App() {
     setNotice({ tone: 'success', text: `${reps} pushups queued.` })
   }
 
-  function completeBreak() {
-    if (!rolledReps) {
+  async function completeBreak() {
+    if (!rolledReps || isSavingCompletion) {
       return
     }
 
-    const entry = createMovementEntry(rolledReps)
-    setEntries((current) => [entry, ...current])
-    setCompletionPulse(true)
-    setNotice({ tone: 'success', text: `Logged ${rolledReps} pushups.` })
-    setRolledReps(null)
-    setDisplayReps(null)
-    window.setTimeout(() => setCompletionPulse(false), 650)
+    const reps = rolledReps
+
+    setIsSavingCompletion(true)
+
+    try {
+      const entry = currentUser ? (await logServerEntry(reps)).entry : createMovementEntry(reps)
+
+      setEntries((current) => [entry, ...current])
+      setCompletionPulse(true)
+      setNotice({ tone: 'success', text: `Logged ${reps} pushups.` })
+      setRolledReps(null)
+      setDisplayReps(null)
+      window.setTimeout(() => setCompletionPulse(false), 650)
+
+      if (currentUser) {
+        const refreshedLeaderboard = await fetchLeaderboard()
+        setLeaderboardRows(refreshedLeaderboard.rows)
+      }
+    } catch (error) {
+      setNotice({ tone: 'error', text: getErrorMessage(error) })
+    } finally {
+      setIsSavingCompletion(false)
+    }
   }
 
   function cancelQueuedBreak() {
@@ -145,6 +266,20 @@ function App() {
     }))
   }
 
+  function startLogin(provider: AuthProvider) {
+    window.location.assign(`/api/auth/${provider}/start`)
+  }
+
+  async function signOut() {
+    try {
+      await logOut()
+      setCurrentUser(null)
+      setSyncNotice('')
+    } catch (error) {
+      setSyncNotice(getErrorMessage(error))
+    }
+  }
+
   return (
     <main className="app-shell">
       <header className="top-bar">
@@ -159,6 +294,13 @@ function App() {
             <Code size={18} />
             Source code
           </a>
+          <AccountActions
+            authProviders={authProviders}
+            authStatus={authStatus}
+            currentUser={currentUser}
+            onLogin={startLogin}
+            onSignOut={signOut}
+          />
         </div>
       </header>
 
@@ -181,11 +323,12 @@ function App() {
                 className="complete-action"
                 type="button"
                 onClick={completeBreak}
+                disabled={isSavingCompletion}
                 title="Mark complete"
                 aria-label="Mark complete"
               >
                 <Check size={22} />
-                Mark complete
+                {isSavingCompletion ? 'Saving...' : 'Mark complete'}
               </button>
               <button className="cancel-action" type="button" onClick={cancelQueuedBreak}>
                 <X size={20} />
@@ -258,6 +401,35 @@ function App() {
               onChange={(event) => updateDirectRepsInput(event.currentTarget.value)}
             />
           </div>
+
+          <div className="sync-summary">
+            <span>{currentUser ? 'Signed in' : authStatus === 'loading' ? 'Checking login' : 'Local only'}</span>
+            <strong>{currentUser?.displayName ?? (authProviders.length > 0 ? 'Not signed in' : 'Login not configured')}</strong>
+            {syncNotice ? <small>{syncNotice}</small> : null}
+          </div>
+        </section>
+
+        <section className="leaderboard-panel" aria-labelledby="leaderboard-heading">
+          <div className="section-heading">
+            <Trophy size={20} />
+            <h2 id="leaderboard-heading">Leaderboard</h2>
+          </div>
+
+          {leaderboardRows.length > 0 ? (
+            <ol className="leaderboard-list">
+              {leaderboardRows.map((row, index) => (
+                <li className="leaderboard-row" key={row.userId}>
+                  <span className="leaderboard-rank">{index + 1}</span>
+                  <Avatar name={row.displayName} src={row.avatarUrl} />
+                  <span className="leaderboard-name">{row.displayName}</span>
+                  <span className="leaderboard-today">{row.todayReps} today</span>
+                  <strong>{row.totalReps}</strong>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="empty-panel">No scores yet.</p>
+          )}
         </section>
       </section>
 
@@ -285,6 +457,67 @@ function App() {
   )
 }
 
+function AccountActions({
+  authProviders,
+  authStatus,
+  currentUser,
+  onLogin,
+  onSignOut,
+}: {
+  authProviders: AuthProvider[]
+  authStatus: 'loading' | 'ready'
+  currentUser: CurrentUser | null
+  onLogin: (provider: AuthProvider) => void
+  onSignOut: () => Promise<void>
+}) {
+  if (authStatus === 'loading') {
+    return <span className="account-loading">Checking login</span>
+  }
+
+  if (currentUser) {
+    return (
+      <div className="account-chip">
+        <Avatar name={currentUser.displayName} src={currentUser.avatarUrl} />
+        <span>{currentUser.displayName}</span>
+        <button className="icon-action" type="button" aria-label="Sign out" onClick={() => void onSignOut()}>
+          <LogOut size={18} />
+        </button>
+      </div>
+    )
+  }
+
+  if (authProviders.length === 0) {
+    return <span className="account-loading">Login not configured</span>
+  }
+
+  return (
+    <div className="login-actions">
+      {authProviders.map((provider) => (
+        <button className="login-action" type="button" key={provider} onClick={() => onLogin(provider)}>
+          <ProviderIcon provider={provider} />
+          {provider === 'github' ? 'GitHub' : 'Google'}
+        </button>
+      ))}
+    </div>
+  )
+}
+
+function ProviderIcon({ provider }: { provider: AuthProvider }) {
+  return <LogIn size={18} aria-label={`${provider} login`} />
+}
+
+function Avatar({ name, src }: { name: string; src: string | null }) {
+  if (src) {
+    return <img className="avatar" src={src} alt="" referrerPolicy="no-referrer" />
+  }
+
+  return (
+    <span className="avatar fallback" aria-label={name}>
+      <User size={16} />
+    </span>
+  )
+}
+
 function Metric({ label, value, detail }: { label: string; value: number; detail: string }) {
   return (
     <div className="metric-card">
@@ -305,6 +538,10 @@ function randomRep() {
   } while (values[0] >= unbiasedMax)
 
   return AVAILABLE_REPS[values[0] % optionCount] ?? FALLBACK_REPS
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Something went wrong.'
 }
 
 export default App

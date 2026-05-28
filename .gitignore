@@ -13,6 +13,7 @@ lerna-debug.log*
 !.env.example
 artifacts/
 data/
+.data/
 .deploy/
 
 node_modules
