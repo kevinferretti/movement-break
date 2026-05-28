@@ -136,9 +136,12 @@ jobs:
           User=ubuntu
           WorkingDirectory=/opt/movement-break/current
           EnvironmentFile=/opt/movement-break/shared/.env
-          ExecStart=/usr/bin/npm run start
+          Environment=NODE_ENV=production
+          ExecStart=/opt/movement-break/current/node_modules/.bin/tsx server/index.ts
           Restart=always
           RestartSec=5
+          TimeoutStopSec=10
+          KillMode=mixed
           NoNewPrivileges=true
 
           [Install]
