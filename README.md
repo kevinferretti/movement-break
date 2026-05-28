@@ -83,10 +83,10 @@ Required GitHub repository secrets:
 ```text
 OVH_SSH_PRIVATE_KEY   # private deploy key for ubuntu@movement.kevinferretti.com
 OVH_SSH_KNOWN_HOSTS   # output from: ssh-keyscan -t ed25519 movement.kevinferretti.com
-GITHUB_CLIENT_ID
-GITHUB_CLIENT_SECRET
-GOOGLE_CLIENT_ID
-GOOGLE_CLIENT_SECRET
+OAUTH_GITHUB_CLIENT_ID
+OAUTH_GITHUB_CLIENT_SECRET
+OAUTH_GOOGLE_CLIENT_ID
+OAUTH_GOOGLE_CLIENT_SECRET
 ```
 
 The deployed service runs from `/opt/movement-break/current` and is managed by `systemd` as `movement-break`. Persistent app data is stored in `/opt/movement-break/shared/data.json`.
