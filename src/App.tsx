@@ -1,41 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, BarChart3, Bell, BellOff, Check, Code, RotateCcw, Settings, X } from 'lucide-react'
+import { Activity, BarChart3, Check, Code, RotateCcw, Settings, X } from 'lucide-react'
 import './App.css'
 import { normalizeSettings, type MovementSettings } from './domain/settings'
 import { buildDailyTotals, createMovementEntry, summarizeEntries, type MovementEntry } from './domain/stats'
-import { formatHour } from './domain/time'
-import {
-  getPushClientStatus,
-  getPushServerStatus,
-  subscribeToBreakNotifications,
-  syncBreakNotificationSettings,
-  unsubscribeFromBreakNotifications,
-  type PushClientStatus,
-  type PushServerStatus,
-} from './lib/push'
 import { loadEntries, loadSettings, saveEntries, saveSettings } from './lib/storage'
 
 type Notice = {
-  tone: 'neutral' | 'success' | 'warning'
+  tone: 'neutral' | 'success'
   text: string
 }
 
-type NotificationStatus = PushClientStatus &
-  PushServerStatus & {
-    message: string
-  }
-
-const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
 const SOURCE_URL = 'https://github.com/kevinferretti/movement-break'
-
-const initialNotificationStatus: NotificationStatus = {
-  supported: false,
-  permission: 'unsupported',
-  endpoint: null,
-  pushConfigured: false,
-  publicKey: null,
-  message: 'Checking notifications...',
-}
 
 function App() {
   const [settings, setSettings] = useState<MovementSettings>(() => loadSettings())
@@ -48,9 +23,6 @@ function App() {
     tone: 'neutral',
     text: 'Ready for the next break.',
   })
-  const [notificationStatus, setNotificationStatus] =
-    useState<NotificationStatus>(initialNotificationStatus)
-  const [notificationBusy, setNotificationBusy] = useState(false)
 
   const summary = useMemo(() => summarizeEntries(entries), [entries])
   const dailyTotals = useMemo(() => buildDailyTotals(entries, 7), [entries])
@@ -64,27 +36,6 @@ function App() {
   useEffect(() => {
     saveEntries(entries)
   }, [entries])
-
-  useEffect(() => {
-    void refreshNotificationStatus()
-  }, [])
-
-  useEffect(() => {
-    if (!settings.notificationsEnabled) {
-      return
-    }
-
-    const timeout = window.setTimeout(() => {
-      void syncBreakNotificationSettings(settings).catch((error: unknown) => {
-        setNotice({
-          tone: 'warning',
-          text: error instanceof Error ? error.message : 'Notification settings did not sync.',
-        })
-      })
-    }, 400)
-
-    return () => window.clearTimeout(timeout)
-  }, [settings])
 
   function updateSettings(patch: Partial<MovementSettings>) {
     setSettings((current) => normalizeSettings({ ...current, ...patch }, current))
@@ -133,67 +84,6 @@ function App() {
     setDisplayReps(settings.repMax)
     setNotice({ tone: 'neutral', text: 'Skipped this roll.' })
   }
-
-  async function refreshNotificationStatus() {
-    try {
-      const [clientStatus, serverStatus] = await Promise.all([
-        getPushClientStatus(),
-        getPushServerStatus(),
-      ])
-
-      setNotificationStatus({
-        ...clientStatus,
-        ...serverStatus,
-        message: getNotificationMessage(clientStatus, serverStatus),
-      })
-    } catch {
-      setNotificationStatus({
-        ...initialNotificationStatus,
-        message: 'Push server is not reachable.',
-      })
-    }
-  }
-
-  async function enableNotifications() {
-    setNotificationBusy(true)
-
-    try {
-      const nextSettings = { ...settings, notificationsEnabled: true }
-      await subscribeToBreakNotifications(nextSettings)
-      setSettings(nextSettings)
-      setNotice({ tone: 'success', text: 'Notifications enabled.' })
-      await refreshNotificationStatus()
-    } catch (error) {
-      setNotice({
-        tone: 'warning',
-        text: error instanceof Error ? error.message : 'Notifications could not be enabled.',
-      })
-    } finally {
-      setNotificationBusy(false)
-    }
-  }
-
-  async function disableNotifications() {
-    setNotificationBusy(true)
-
-    try {
-      await unsubscribeFromBreakNotifications()
-      setSettings({ ...settings, notificationsEnabled: false })
-      setNotice({ tone: 'neutral', text: 'Notifications disabled.' })
-      await refreshNotificationStatus()
-    } catch (error) {
-      setNotice({
-        tone: 'warning',
-        text: error instanceof Error ? error.message : 'Notifications could not be disabled.',
-      })
-    } finally {
-      setNotificationBusy(false)
-    }
-  }
-
-  const canEnableNotifications =
-    notificationStatus.supported && notificationStatus.pushConfigured && notificationStatus.permission !== 'denied'
-  const notificationsActive = Boolean(notificationStatus.endpoint && settings.notificationsEnabled)
 
   return (
     <main className="app-shell">
@@ -305,59 +195,6 @@ function App() {
             </div>
           </div>
 
-          <div className="setting-row compact">
-            <label htmlFor="start-hour">Hours</label>
-            <div className="select-pair">
-              <select
-                id="start-hour"
-                value={settings.startHour}
-                onChange={(event) => updateSettings({ startHour: Number(event.currentTarget.value) })}
-              >
-                {HOURS.map((hour) => (
-                  <option key={hour} value={hour}>
-                    {formatHour(hour)}
-                  </option>
-                ))}
-              </select>
-              <span>to</span>
-              <select
-                aria-label="End hour"
-                value={settings.endHour}
-                onChange={(event) => updateSettings({ endHour: Number(event.currentTarget.value) })}
-              >
-                {HOURS.map((hour) => (
-                  <option key={hour} value={hour}>
-                    {formatHour(hour)}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="notification-box">
-            <div>
-              <span className="box-label">Notifications</span>
-              <p>{notificationStatus.message}</p>
-            </div>
-            <div className="notification-actions">
-              {notificationsActive ? (
-                <button type="button" className="secondary-action" onClick={disableNotifications} disabled={notificationBusy}>
-                  <BellOff size={18} />
-                  Off
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="secondary-action"
-                  onClick={enableNotifications}
-                  disabled={!canEnableNotifications || notificationBusy}
-                >
-                  <Bell size={18} />
-                  On
-                </button>
-              )}
-            </div>
-          </div>
         </section>
       </section>
     </main>
@@ -380,26 +217,6 @@ function randomRep(min: number, max: number) {
   window.crypto.getRandomValues(values)
 
   return min + (values[0] % range)
-}
-
-function getNotificationMessage(clientStatus: PushClientStatus, serverStatus: PushServerStatus) {
-  if (!clientStatus.supported) {
-    return 'Not supported in this browser.'
-  }
-
-  if (!serverStatus.pushConfigured) {
-    return 'Server keys missing.'
-  }
-
-  if (clientStatus.permission === 'denied') {
-    return 'Permission blocked.'
-  }
-
-  if (clientStatus.endpoint) {
-    return 'Hourly reminders active.'
-  }
-
-  return 'Ready to enable.'
 }
 
 export default App

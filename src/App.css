@@ -78,11 +78,6 @@
   background: color-mix(in srgb, var(--green) 10%, var(--panel));
 }
 
-.notice.warning {
-  border-color: color-mix(in srgb, var(--coral) 45%, var(--line));
-  background: color-mix(in srgb, var(--coral) 10%, var(--panel));
-}
-
 .break-stage {
   min-height: 390px;
   display: grid;
@@ -325,8 +320,7 @@ button:disabled {
   align-items: center;
 }
 
-.setting-row label,
-.box-label {
+.setting-row label {
   color: var(--ink);
   font-weight: 800;
 }
@@ -357,38 +351,6 @@ select {
   padding: 0 10px;
   font: inherit;
   letter-spacing: 0;
-}
-
-.notification-box {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 12px;
-  align-items: center;
-  margin-top: 18px;
-  padding: 14px;
-  border: 1px solid var(--line-strong);
-  border-radius: 8px;
-  background: var(--paper);
-}
-
-.notification-box p {
-  margin-top: 4px;
-  color: var(--muted);
-  font-size: 0.88rem;
-}
-
-.notification-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.secondary-action {
-  color: var(--ink);
-  background: color-mix(in srgb, var(--yellow) 34%, var(--paper));
-  border: 1px solid color-mix(in srgb, var(--yellow) 52%, var(--line));
-  min-width: 82px;
-  padding: 0 12px;
 }
 
 @media (max-width: 860px) {
@@ -465,16 +427,7 @@ select {
     gap: 6px;
   }
 
-  .setting-row.compact,
-  .notification-box {
+  .setting-row.compact {
     grid-template-columns: 1fr;
-  }
-
-  .notification-actions {
-    justify-content: stretch;
-  }
-
-  .secondary-action {
-    flex: 1;
   }
 }

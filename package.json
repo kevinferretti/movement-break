@@ -12,7 +12,6 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "npm run build && npm run server:start",
-    "push:keys": "tsx scripts/generate-vapid-keys.ts",
     "test": "vitest run"
   },
   "dependencies": {
@@ -20,11 +19,9 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "lucide-react": "^1.17.0",
-    "node-cron": "^4.2.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "tsx": "^4.22.3",
-    "web-push": "^3.6.7"
+    "tsx": "^4.22.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -33,7 +30,6 @@
     "@types/node": "^24.12.4",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@types/web-push": "^3.6.4",
     "@vitejs/plugin-react": "^6.0.1",
     "concurrently": "^10.0.0",
     "eslint": "^10.3.0",

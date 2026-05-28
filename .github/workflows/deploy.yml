@@ -26,10 +26,7 @@ jobs:
     env:
       OVH_SSH_PRIVATE_KEY: ${{ secrets.OVH_SSH_PRIVATE_KEY }}
       OVH_SSH_KNOWN_HOSTS: ${{ secrets.OVH_SSH_KNOWN_HOSTS }}
-      VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
-      VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
-      VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
-      DEPLOY_SECRETS_CONFIGURED: ${{ secrets.OVH_SSH_PRIVATE_KEY != '' && secrets.OVH_SSH_KNOWN_HOSTS != '' && secrets.VAPID_PUBLIC_KEY != '' && secrets.VAPID_PRIVATE_KEY != '' }}
+      DEPLOY_SECRETS_CONFIGURED: ${{ secrets.OVH_SSH_PRIVATE_KEY != '' && secrets.OVH_SSH_KNOWN_HOSTS != '' }}
 
     steps:
       - name: Check required secrets
@@ -84,14 +81,9 @@ jobs:
         if: env.DEPLOY_SECRETS_CONFIGURED == 'true'
         run: |
           set -euo pipefail
-          subject="${VAPID_SUBJECT:-mailto:you@example.com}"
           {
             printf 'PORT=%s\n' "$APP_PORT"
             printf 'CLIENT_ORIGIN=%s\n' "$CLIENT_ORIGIN"
-            printf 'VAPID_SUBJECT=%s\n' "$subject"
-            printf 'VAPID_PUBLIC_KEY=%s\n' "$VAPID_PUBLIC_KEY"
-            printf 'VAPID_PRIVATE_KEY=%s\n' "$VAPID_PRIVATE_KEY"
-            printf 'DATA_FILE=%s/shared/data/subscriptions.json\n' "$DEPLOY_ROOT"
           } > movement-break.env
           chmod 600 movement-break.env
 
@@ -112,7 +104,7 @@ jobs:
           set -euo pipefail
 
           release="$DEPLOY_ROOT/releases/$GITHUB_SHA"
-          sudo mkdir -p "$DEPLOY_ROOT/releases" "$DEPLOY_ROOT/shared/data"
+          sudo mkdir -p "$DEPLOY_ROOT/releases" "$DEPLOY_ROOT/shared"
           sudo chown -R "$USER:$USER" "$DEPLOY_ROOT"
 
           mkdir -p "$release"

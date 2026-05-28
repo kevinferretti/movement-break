@@ -1,7 +1,7 @@
 {
   "name": "Movement Break",
   "short_name": "Move Break",
-  "description": "Hourly pushup breaks with configurable reps, reminders, and local stats.",
+  "description": "Pushup breaks with configurable reps and local stats.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

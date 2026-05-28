@@ -1,16 +1,11 @@
-import {
-  createDefaultSettings,
-  getBrowserTimeZone,
-  normalizeSettings,
-  type MovementSettings,
-} from '../domain/settings'
+import { createDefaultSettings, normalizeSettings, type MovementSettings } from '../domain/settings'
 import type { MovementEntry } from '../domain/stats'
 
 const SETTINGS_KEY = 'movement-break.settings.v1'
 const ENTRIES_KEY = 'movement-break.entries.v1'
 
 export function loadSettings(): MovementSettings {
-  const fallback = createDefaultSettings(getBrowserTimeZone())
+  const fallback = createDefaultSettings()
 
   try {
     const raw = window.localStorage.getItem(SETTINGS_KEY)
