@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, BarChart3, Bell, BellOff, Check, RotateCcw, Send, Settings } from 'lucide-react'
+import { Activity, BarChart3, Bell, BellOff, Check, Code, RotateCcw, Send, Settings, X } from 'lucide-react'
 import './App.css'
 import { normalizeSettings, type MovementSettings } from './domain/settings'
 import { buildDailyTotals, createMovementEntry, summarizeEntries, type MovementEntry } from './domain/stats'
@@ -27,6 +27,7 @@ type NotificationStatus = PushClientStatus &
   }
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour)
+const SOURCE_URL = 'https://github.com/kevinferretti/movement-break'
 
 const initialNotificationStatus: NotificationStatus = {
   supported: false,
@@ -128,6 +129,12 @@ function App() {
     window.setTimeout(() => setCompletionPulse(false), 650)
   }
 
+  function cancelQueuedBreak() {
+    setRolledReps(null)
+    setDisplayReps(settings.repMax)
+    setNotice({ tone: 'neutral', text: 'Skipped this roll.' })
+  }
+
   async function refreshNotificationStatus() {
     try {
       const [clientStatus, serverStatus] = await Promise.all([
@@ -213,10 +220,15 @@ function App() {
         </div>
         <div>
           <h1>Movement Break</h1>
-          <p className="subtle">Pushups for now. More movement types later.</p>
         </div>
-        <div className={`notice ${notice.tone}`} role="status">
-          {notice.text}
+        <div className="header-actions">
+          <a className="source-link" href={SOURCE_URL} target="_blank" rel="noreferrer">
+            <Code size={18} />
+            Source code
+          </a>
+          <div className={`notice ${notice.tone}`} role="status">
+            {notice.text}
+          </div>
         </div>
       </header>
 
@@ -232,21 +244,23 @@ function App() {
           <span>{visibleReps}</span>
         </div>
 
-        <div className="break-actions">
-          <button className="primary-action" type="button" onClick={rollReps} disabled={isRolling}>
-            <RotateCcw size={20} />
-            Roll
-          </button>
-          <button
-            className="complete-action"
-            type="button"
-            onClick={completeBreak}
-            disabled={!rolledReps || isRolling}
-            title="Mark complete"
-            aria-label="Mark complete"
-          >
-            <Check size={30} />
-          </button>
+        <div className={`break-actions ${rolledReps ? 'queued' : 'ready'}`}>
+          {rolledReps ? (
+            <>
+              <button className="complete-action" type="button" onClick={completeBreak} title="Mark complete" aria-label="Mark complete">
+                <Check size={30} />
+              </button>
+              <button className="cancel-action" type="button" onClick={cancelQueuedBreak}>
+                <X size={20} />
+                Actually, nah
+              </button>
+            </>
+          ) : (
+            <button className="primary-action" type="button" onClick={rollReps} disabled={isRolling}>
+              <RotateCcw size={20} />
+              Roll
+            </button>
+          )}
         </div>
       </section>
 

@@ -31,7 +31,7 @@ Copy the generated `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY` values into `.env`
 npm run dev
 ```
 
-The app runs at `http://localhost:5173`. The API runs at `http://localhost:8787` and Vite proxies `/api` to it.
+The app runs at `http://localhost:5175`. The API runs at `http://localhost:8787` and Vite proxies `/api` to it.
 
 If VAPID keys are missing, the UI shows notifications as unavailable instead of faking them.
 
