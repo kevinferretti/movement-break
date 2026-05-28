@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, BarChart3, Check, Code, Hash, RefreshCw, RotateCcw, Settings, X } from 'lucide-react'
+import { Activity, BarChart3, Check, Code, RefreshCw, RotateCcw, Settings, X } from 'lucide-react'
 import './App.css'
 import { normalizePreferences, type MovementPreferences } from './domain/preferences'
 import { AVAILABLE_REPS } from './domain/reps'
@@ -199,8 +199,7 @@ function App() {
                 Roll
               </button>
               <button className="direct-action" type="button" onClick={queueDirectReps} disabled={isRolling}>
-                <Hash size={20} />
-                Set {preferences.directReps}
+                Queue {preferences.directReps}
               </button>
             </>
           )}
