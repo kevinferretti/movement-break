@@ -383,21 +383,12 @@ select {
   gap: 8px;
 }
 
-.secondary-action,
-.icon-action {
+.secondary-action {
   color: var(--ink);
   background: color-mix(in srgb, var(--yellow) 34%, var(--paper));
   border: 1px solid color-mix(in srgb, var(--yellow) 52%, var(--line));
-}
-
-.secondary-action {
   min-width: 82px;
   padding: 0 12px;
-}
-
-.icon-action {
-  width: 44px;
-  padding: 0;
 }
 
 @media (max-width: 860px) {

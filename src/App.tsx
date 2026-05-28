@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, BarChart3, Bell, BellOff, Check, Code, RotateCcw, Send, Settings, X } from 'lucide-react'
+import { Activity, BarChart3, Bell, BellOff, Check, Code, RotateCcw, Settings, X } from 'lucide-react'
 import './App.css'
 import { normalizeSettings, type MovementSettings } from './domain/settings'
 import { buildDailyTotals, createMovementEntry, summarizeEntries, type MovementEntry } from './domain/stats'
@@ -7,7 +7,6 @@ import { formatHour } from './domain/time'
 import {
   getPushClientStatus,
   getPushServerStatus,
-  sendTestBreakNotification,
   subscribeToBreakNotifications,
   syncBreakNotificationSettings,
   unsubscribeFromBreakNotifications,
@@ -192,22 +191,6 @@ function App() {
     }
   }
 
-  async function sendTestNotification() {
-    setNotificationBusy(true)
-
-    try {
-      await sendTestBreakNotification()
-      setNotice({ tone: 'success', text: 'Test notification sent.' })
-    } catch (error) {
-      setNotice({
-        tone: 'warning',
-        text: error instanceof Error ? error.message : 'Test notification failed.',
-      })
-    } finally {
-      setNotificationBusy(false)
-    }
-  }
-
   const canEnableNotifications =
     notificationStatus.supported && notificationStatus.pushConfigured && notificationStatus.permission !== 'denied'
   const notificationsActive = Boolean(notificationStatus.endpoint && settings.notificationsEnabled)
@@ -373,16 +356,6 @@ function App() {
                   On
                 </button>
               )}
-              <button
-                type="button"
-                className="icon-action"
-                onClick={sendTestNotification}
-                disabled={!notificationStatus.endpoint || !notificationStatus.pushConfigured || notificationBusy}
-                title="Send test notification"
-                aria-label="Send test notification"
-              >
-                <Send size={18} />
-              </button>
             </div>
           </div>
         </section>
