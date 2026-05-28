@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Activity, BarChart3, Check, Code, RotateCcw, X } from 'lucide-react'
+import { Activity, BarChart3, Check, Code, RefreshCw, RotateCcw, X } from 'lucide-react'
 import './App.css'
 import { AVAILABLE_REPS } from './domain/reps'
 import { buildDailyTotals, createMovementEntry, summarizeEntries, type MovementEntry } from './domain/stats'
+import { APP_UPDATE_AVAILABLE_EVENT, type AppUpdateAvailableEvent } from './lib/appUpdates'
 import { loadEntries, saveEntries } from './lib/storage'
 
 type Notice = {
@@ -19,6 +20,7 @@ function App() {
   const [displayReps, setDisplayReps] = useState<number | null>(null)
   const [isRolling, setIsRolling] = useState(false)
   const [completionPulse, setCompletionPulse] = useState(false)
+  const [refreshUpdate, setRefreshUpdate] = useState<(() => void) | null>(null)
   const [notice, setNotice] = useState<Notice>({
     tone: 'neutral',
     text: 'Ready for the next break.',
@@ -31,6 +33,19 @@ function App() {
   useEffect(() => {
     saveEntries(entries)
   }, [entries])
+
+  useEffect(() => {
+    function handleUpdateAvailable(event: Event) {
+      const updateEvent = event as AppUpdateAvailableEvent
+      setRefreshUpdate(() => updateEvent.detail.refresh)
+    }
+
+    window.addEventListener(APP_UPDATE_AVAILABLE_EVENT, handleUpdateAvailable)
+
+    return () => {
+      window.removeEventListener(APP_UPDATE_AVAILABLE_EVENT, handleUpdateAvailable)
+    }
+  }, [])
 
   function rollReps() {
     if (isRolling) {
@@ -166,6 +181,27 @@ function App() {
           </div>
         </section>
       </section>
+
+      {refreshUpdate ? (
+        <div className="update-toast" role="alert" aria-live="assertive">
+          <div>
+            <strong>New version ready</strong>
+            <span>Refresh to update.</span>
+          </div>
+          <button className="update-refresh" type="button" onClick={refreshUpdate}>
+            <RefreshCw size={18} />
+            Refresh
+          </button>
+          <button
+            className="update-dismiss"
+            type="button"
+            aria-label="Dismiss update prompt"
+            onClick={() => setRefreshUpdate(null)}
+          >
+            <X size={18} />
+          </button>
+        </div>
+      ) : null}
     </main>
   )
 }
