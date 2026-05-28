@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Activity, BarChart3, Check, Code, RotateCcw, X } from 'lucide-react'
 import './App.css'
-import { AVAILABLE_REPS, REP_OPTIONS_LABEL } from './domain/reps'
+import { AVAILABLE_REPS } from './domain/reps'
 import { buildDailyTotals, createMovementEntry, summarizeEntries, type MovementEntry } from './domain/stats'
 import { loadEntries, saveEntries } from './lib/storage'
 
@@ -99,7 +99,6 @@ function App() {
       <section className="break-stage" aria-label="Pushup break">
         <div className="movement-label">
           <span>Pushups</span>
-          <strong>{REP_OPTIONS_LABEL}</strong>
         </div>
 
         <div className={`rep-dial ${isRolling ? 'rolling' : ''} ${completionPulse ? 'complete' : ''}`}>
