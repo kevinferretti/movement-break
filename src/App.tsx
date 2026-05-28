@@ -11,12 +11,12 @@ type Notice = {
 }
 
 const SOURCE_URL = 'https://github.com/kevinferretti/movement-break'
-const INITIAL_REPS = AVAILABLE_REPS[AVAILABLE_REPS.length - 1]
+const FALLBACK_REPS = 1
 
 function App() {
   const [entries, setEntries] = useState<MovementEntry[]>(() => loadEntries())
   const [rolledReps, setRolledReps] = useState<number | null>(null)
-  const [displayReps, setDisplayReps] = useState(INITIAL_REPS)
+  const [displayReps, setDisplayReps] = useState<number | null>(null)
   const [isRolling, setIsRolling] = useState(false)
   const [completionPulse, setCompletionPulse] = useState(false)
   const [notice, setNotice] = useState<Notice>({
@@ -39,6 +39,7 @@ function App() {
 
     setIsRolling(true)
     setRolledReps(null)
+    setDisplayReps(randomRep())
     setNotice({ tone: 'neutral', text: 'Rolling...' })
 
     let ticks = 0
@@ -67,12 +68,13 @@ function App() {
     setCompletionPulse(true)
     setNotice({ tone: 'success', text: `Logged ${rolledReps} pushups.` })
     setRolledReps(null)
+    setDisplayReps(null)
     window.setTimeout(() => setCompletionPulse(false), 650)
   }
 
   function cancelQueuedBreak() {
     setRolledReps(null)
-    setDisplayReps(INITIAL_REPS)
+    setDisplayReps(null)
     setNotice({ tone: 'neutral', text: 'Skipped this roll.' })
   }
 
@@ -101,8 +103,11 @@ function App() {
           <span>Pushups</span>
         </div>
 
-        <div className={`rep-dial ${isRolling ? 'rolling' : ''} ${completionPulse ? 'complete' : ''}`}>
-          <span>{displayReps}</span>
+        <div
+          className={`rep-dial ${displayReps === null ? 'empty' : ''} ${isRolling ? 'rolling' : ''} ${completionPulse ? 'complete' : ''}`}
+          aria-label={displayReps === null ? 'No reps rolled yet' : `${displayReps} pushups`}
+        >
+          <span>{displayReps ?? ''}</span>
         </div>
 
         <div className={`break-actions ${rolledReps ? 'queued' : 'ready'}`}>
@@ -184,7 +189,7 @@ function randomRep() {
     window.crypto.getRandomValues(values)
   } while (values[0] >= unbiasedMax)
 
-  return AVAILABLE_REPS[values[0] % optionCount] ?? INITIAL_REPS
+  return AVAILABLE_REPS[values[0] % optionCount] ?? FALLBACK_REPS
 }
 
 export default App
