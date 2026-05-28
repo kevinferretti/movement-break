@@ -34,6 +34,9 @@ export class SubscriptionStore {
         createdAt: existing?.createdAt ?? now,
         updatedAt: now,
         lastNotifiedHourKey: existing?.lastNotifiedHourKey ?? null,
+        lastNotificationAttemptAt: existing?.lastNotificationAttemptAt ?? null,
+        lastNotificationSuccessAt: existing?.lastNotificationSuccessAt ?? null,
+        lastNotificationError: existing?.lastNotificationError ?? null,
         failureCount: existing?.failureCount ?? 0,
       }
 

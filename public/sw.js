@@ -44,6 +44,8 @@ self.addEventListener('push', (event) => {
     body: payload.body || 'Time to roll pushups.',
     badge: '/icon.svg',
     icon: '/icon.svg',
+    requireInteraction: true,
+    timestamp: Date.now(),
     data: {
       url: payload.url || '/',
     },

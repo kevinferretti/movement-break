@@ -1,4 +1,5 @@
 import cron from 'node-cron'
+import { createHash } from 'node:crypto'
 import webPush from 'web-push'
 import { canNotifyAtHour } from '../src/domain/settings.ts'
 import { getLocalHourParts } from '../src/domain/time.ts'
@@ -42,6 +43,10 @@ export function startHourlyPushScheduler(store: SubscriptionStore) {
 
 export async function sendDueNotifications(store: SubscriptionStore, now: Date) {
   const subscriptions = await store.all()
+  let attempted = 0
+  let sent = 0
+  let skipped = 0
+  let failed = 0
 
   await Promise.all(
     subscriptions.map(async (subscription) => {
@@ -51,10 +56,18 @@ export async function sendDueNotifications(store: SubscriptionStore, now: Date) 
         !canNotifyAtHour(subscription.settings, localParts.hour) ||
         subscription.lastNotifiedHourKey === localParts.hourKey
       ) {
+        skipped += 1
         return
       }
 
+      attempted += 1
+      const attemptedAt = now.toISOString()
+
       try {
+        await store.patch(subscription.endpoint, {
+          lastNotificationAttemptAt: attemptedAt,
+          lastNotificationError: null,
+        })
         await sendNotification(subscription, {
           title: 'Movement break',
           body: 'Roll your pushups.',
@@ -63,21 +76,47 @@ export async function sendDueNotifications(store: SubscriptionStore, now: Date) 
         })
         await store.patch(subscription.endpoint, {
           lastNotifiedHourKey: localParts.hourKey,
+          lastNotificationSuccessAt: new Date().toISOString(),
+          lastNotificationError: null,
           failureCount: 0,
+        })
+        sent += 1
+        console.info('Sent movement break notification', {
+          subscription: describeSubscription(subscription),
+          hourKey: localParts.hourKey,
+          timeZone: subscription.settings.timeZone,
         })
       } catch (error) {
         if (isExpiredSubscription(error)) {
           await store.delete(subscription.endpoint)
+          failed += 1
+          console.warn('Removed expired movement break subscription', {
+            subscription: describeSubscription(subscription),
+            hourKey: localParts.hourKey,
+          })
           return
         }
 
+        failed += 1
         await store.patch(subscription.endpoint, {
           failureCount: subscription.failureCount + 1,
+          lastNotificationError: getErrorMessage(error),
         })
         console.error('Failed to send movement break notification', error)
       }
     }),
   )
+
+  if (subscriptions.length > 0) {
+    console.info('Movement break scheduler tick', {
+      now: now.toISOString(),
+      subscriptions: subscriptions.length,
+      attempted,
+      sent,
+      skipped,
+      failed,
+    })
+  }
 }
 
 async function sendNotification(
@@ -98,4 +137,15 @@ function isExpiredSubscription(error: unknown) {
   }
 
   return error.statusCode === 404 || error.statusCode === 410
+}
+
+function describeSubscription(subscription: StoredPushSubscription) {
+  return {
+    host: new URL(subscription.endpoint).host,
+    id: createHash('sha256').update(subscription.endpoint).digest('hex').slice(0, 10),
+  }
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Unknown push notification error'
 }

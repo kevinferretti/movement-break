@@ -8,6 +8,9 @@ export type StoredPushSubscription = {
   createdAt: string
   updatedAt: string
   lastNotifiedHourKey: string | null
+  lastNotificationAttemptAt?: string | null
+  lastNotificationSuccessAt?: string | null
+  lastNotificationError?: string | null
   failureCount: number
 }
 
