@@ -8,6 +8,7 @@
     "client:dev": "vite",
     "server:dev": "tsx watch server/index.ts",
     "server:start": "tsx server/index.ts",
+    "start": "tsx server/index.ts",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "npm run build && npm run server:start",
@@ -22,6 +23,7 @@
     "node-cron": "^4.2.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "tsx": "^4.22.3",
     "web-push": "^3.6.7"
   },
   "devDependencies": {
@@ -38,7 +40,6 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
-    "tsx": "^4.22.3",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",

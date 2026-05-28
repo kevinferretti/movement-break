@@ -59,3 +59,19 @@ npm run push:keys    # generate VAPID keys for Web Push
 ## Deployment Notes
 
 The frontend needs HTTPS for mobile installation and Web Push outside local development. The Express server also needs to stay running so its hourly scheduler can send reminders. For a low-cost friend-group deployment, use a static host for the Vite build plus a small Node host for the server, or serve `dist` directly from the Express server with `npm run preview`.
+
+## Continuous Deployment
+
+Pushes to `main` deploy to `https://movement.kevinferretti.com` through `.github/workflows/deploy.yml`.
+
+Required GitHub repository secrets:
+
+```text
+OVH_SSH_PRIVATE_KEY   # private deploy key for ubuntu@movement.kevinferretti.com
+OVH_SSH_KNOWN_HOSTS   # output from: ssh-keyscan -t ed25519 movement.kevinferretti.com
+VAPID_PUBLIC_KEY      # output from: npm run push:keys
+VAPID_PRIVATE_KEY     # output from: npm run push:keys
+VAPID_SUBJECT         # optional, for example mailto:you@example.com
+```
+
+The deployed service runs from `/opt/movement-break/current`, keeps Web Push subscriptions in `/opt/movement-break/shared/data/subscriptions.json`, and is managed by `systemd` as `movement-break`.
