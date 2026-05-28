@@ -143,7 +143,7 @@ jobs:
           sudo systemctl daemon-reload
           sudo systemctl enable movement-break
           sudo systemctl restart movement-break
-          curl --fail --retry 10 --retry-delay 2 "http://127.0.0.1:8787/api/health"
+          curl --fail --retry 10 --retry-delay 2 --retry-connrefused "http://127.0.0.1:8787/api/health"
 
           find "$DEPLOY_ROOT/releases" -mindepth 1 -maxdepth 1 -type d | sort | head -n -5 | xargs -r rm -rf
           REMOTE
