@@ -8,7 +8,6 @@ import { fileURLToPath } from 'node:url'
 import {
   JsonDataStore,
   ValidationError,
-  buildLeaderboard,
   createStoredEntry,
   getUserEntries,
   importLocalEntries,
@@ -200,17 +199,6 @@ app.post(
       importedCount: result.importedCount,
       entries: result.entries.map(serializeEntry),
       user: serializeUser(result.user),
-    })
-  }),
-)
-
-app.get(
-  '/api/leaderboard',
-  asyncRoute(async (_request, response) => {
-    const data = await store.read()
-
-    response.json({
-      rows: buildLeaderboard(data),
     })
   }),
 )

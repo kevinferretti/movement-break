@@ -9,7 +9,6 @@ import {
   RefreshCw,
   RotateCcw,
   Settings,
-  Trophy,
   User,
   X,
 } from 'lucide-react'
@@ -20,14 +19,12 @@ import { buildDailyTotals, createMovementEntry, summarizeEntries, type MovementE
 import {
   fetchAuthConfig,
   fetchCurrentUser,
-  fetchLeaderboard,
   fetchServerEntries,
   importLocalEntriesToServer,
   logOut,
   logServerEntry,
   type AuthProvider,
   type CurrentUser,
-  type LeaderboardRow,
 } from './lib/api'
 import { APP_UPDATE_AVAILABLE_EVENT, type AppUpdateAvailableEvent } from './lib/appUpdates'
 import { loadEntries, loadPreferences, saveEntries, savePreferences } from './lib/storage'
@@ -63,7 +60,6 @@ function App() {
   const [authStatus, setAuthStatus] = useState<'loading' | 'ready'>('loading')
   const [authProviders, setAuthProviders] = useState<AuthProvider[]>([])
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
-  const [leaderboardRows, setLeaderboardRows] = useState<LeaderboardRow[]>([])
   const [syncNotice, setSyncNotice] = useState('')
   const [refreshUpdate, setRefreshUpdate] = useState<(() => void) | null>(null)
   const [notice, setNotice] = useState<Notice>({
@@ -101,18 +97,13 @@ function App() {
 
     async function loadAccount() {
       try {
-        const [authConfig, session, leaderboard] = await Promise.all([
-          fetchAuthConfig(),
-          fetchCurrentUser(),
-          fetchLeaderboard(),
-        ])
+        const [authConfig, session] = await Promise.all([fetchAuthConfig(), fetchCurrentUser()])
 
         if (!isMounted) {
           return
         }
 
         setAuthProviders(authConfig.providers)
-        setLeaderboardRows(leaderboard.rows)
 
         if (!session.user) {
           setCurrentUser(null)
@@ -133,12 +124,6 @@ function App() {
               ? `Imported ${importResult.importedCount} local breaks.`
               : 'Local import locked.',
           )
-
-          const refreshedLeaderboard = await fetchLeaderboard()
-
-          if (isMounted) {
-            setLeaderboardRows(refreshedLeaderboard.rows)
-          }
 
           return
         }
@@ -225,11 +210,6 @@ function App() {
       setRolledReps(null)
       setDisplayReps(null)
       window.setTimeout(() => setCompletionPulse(false), 650)
-
-      if (currentUser) {
-        const refreshedLeaderboard = await fetchLeaderboard()
-        setLeaderboardRows(refreshedLeaderboard.rows)
-      }
     } catch (error) {
       setNotice({ tone: 'error', text: getErrorMessage(error) })
     } finally {
@@ -407,29 +387,6 @@ function App() {
             <strong>{currentUser?.displayName ?? (authProviders.length > 0 ? 'Not signed in' : 'Login not configured')}</strong>
             {syncNotice ? <small>{syncNotice}</small> : null}
           </div>
-        </section>
-
-        <section className="leaderboard-panel" aria-labelledby="leaderboard-heading">
-          <div className="section-heading">
-            <Trophy size={20} />
-            <h2 id="leaderboard-heading">Leaderboard</h2>
-          </div>
-
-          {leaderboardRows.length > 0 ? (
-            <ol className="leaderboard-list">
-              {leaderboardRows.map((row, index) => (
-                <li className="leaderboard-row" key={row.userId}>
-                  <span className="leaderboard-rank">{index + 1}</span>
-                  <Avatar name={row.displayName} src={row.avatarUrl} />
-                  <span className="leaderboard-name">{row.displayName}</span>
-                  <span className="leaderboard-today">{row.todayReps} today</span>
-                  <strong>{row.totalReps}</strong>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <p className="empty-panel">No scores yet.</p>
-          )}
         </section>
       </section>
 

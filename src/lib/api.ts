@@ -11,15 +11,6 @@ export type CurrentUser = {
   importedLocalEntryCount: number
 }
 
-export type LeaderboardRow = {
-  userId: string
-  displayName: string
-  avatarUrl: string | null
-  totalReps: number
-  totalBreaks: number
-  todayReps: number
-}
-
 export function fetchAuthConfig() {
   return requestJson<{ providers: AuthProvider[] }>('/api/auth/config')
 }
@@ -30,10 +21,6 @@ export function fetchCurrentUser() {
 
 export function fetchServerEntries() {
   return requestJson<{ entries: MovementEntry[] }>('/api/stats/entries')
-}
-
-export function fetchLeaderboard() {
-  return requestJson<{ rows: LeaderboardRow[] }>('/api/leaderboard')
 }
 
 export function importLocalEntriesToServer(entries: MovementEntry[]) {

@@ -294,29 +294,13 @@ button:disabled {
 .dashboard-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(240px, 0.4fr);
-  grid-template-areas:
-    "stats settings"
-    "leaderboard leaderboard";
   gap: 18px;
   width: min(100%, 820px);
   margin-inline: auto;
 }
 
-.stats-panel {
-  grid-area: stats;
-}
-
-.settings-panel {
-  grid-area: settings;
-}
-
-.leaderboard-panel {
-  grid-area: leaderboard;
-}
-
 .stats-panel,
-.settings-panel,
-.leaderboard-panel {
+.settings-panel {
   padding: 20px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -456,60 +440,6 @@ input:focus-visible {
   background: linear-gradient(180deg, var(--yellow), var(--coral));
 }
 
-.leaderboard-list {
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-  list-style: none;
-}
-
-.leaderboard-row {
-  min-width: 0;
-  min-height: 48px;
-  display: grid;
-  grid-template-columns: 28px 32px minmax(0, 1fr) auto auto;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--paper);
-}
-
-.leaderboard-rank {
-  color: var(--muted);
-  font-weight: 900;
-  text-align: center;
-}
-
-.leaderboard-name {
-  min-width: 0;
-  color: var(--ink);
-  font-weight: 800;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.leaderboard-today {
-  color: var(--muted);
-  font-size: 0.82rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.leaderboard-row strong {
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-}
-
-.empty-panel {
-  margin: 0;
-  color: var(--muted);
-  font-weight: 700;
-}
-
 .update-toast {
   position: fixed;
   right: max(18px, env(safe-area-inset-right));
@@ -599,10 +529,6 @@ input:focus-visible {
 
   .dashboard-grid {
     grid-template-columns: 1fr;
-    grid-template-areas:
-      "stats"
-      "settings"
-      "leaderboard";
   }
 }
 
@@ -634,14 +560,6 @@ input:focus-visible {
 
   .history-bars {
     gap: 6px;
-  }
-
-  .leaderboard-row {
-    grid-template-columns: 24px 32px minmax(0, 1fr) auto;
-  }
-
-  .leaderboard-today {
-    display: none;
   }
 
   .complete-action {

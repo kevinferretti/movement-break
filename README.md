@@ -8,7 +8,7 @@ A small PWA for pushup breaks. It stores completion stats and personal preferenc
 - Express production server
 - Service worker and web app manifest
 - Browser `localStorage` for signed-out stats
-- Server-side OAuth sessions and persisted leaderboard stats
+- Server-side OAuth sessions and persisted stats
 
 ## Local Setup
 
@@ -54,7 +54,6 @@ npm run lint         # eslint
 - Today and seven-day stats
 - Google and GitHub login
 - One-time local stat import per account
-- Persistent leaderboard totals
 
 ## Deployment Notes
 

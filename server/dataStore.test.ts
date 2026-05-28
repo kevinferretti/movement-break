@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  buildLeaderboard,
   createEmptyData,
   importLocalEntries,
   normalizeImportedEntries,
@@ -101,10 +100,11 @@ describe('importLocalEntries', () => {
       imported: false,
       importedCount: 0,
     })
-    expect(buildLeaderboard(data, new Date('2026-05-28T18:00:00.000Z'))[0]).toMatchObject({
-      displayName: 'Kevin',
-      totalReps: 100,
-      totalBreaks: 1,
+    expect(data.entries).toHaveLength(1)
+    expect(data.entries[0]).toMatchObject({
+      userId: user.id,
+      reps: 100,
+      source: 'local_import',
     })
   })
 })

@@ -38,15 +38,6 @@ export type StoredMovementEntry = MovementEntry & {
   createdAt: string
 }
 
-export type LeaderboardRow = {
-  userId: string
-  displayName: string
-  avatarUrl: string | null
-  totalReps: number
-  totalBreaks: number
-  todayReps: number
-}
-
 export type DatabaseFile = {
   version: 1
   users: UserRecord[]
@@ -226,28 +217,6 @@ export function getUserEntries(data: DatabaseFile, userId: string) {
     .sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))
 }
 
-export function buildLeaderboard(data: DatabaseFile, now = new Date()): LeaderboardRow[] {
-  const todayKey = toDateKey(now)
-  const rows = data.users.map((user) => {
-    const entries = data.entries.filter((entry) => entry.userId === user.id)
-    const todayEntries = entries.filter((entry) => toDateKey(new Date(entry.completedAt)) === todayKey)
-
-    return {
-      userId: user.id,
-      displayName: user.displayName,
-      avatarUrl: user.avatarUrl,
-      totalReps: sumReps(entries),
-      totalBreaks: entries.length,
-      todayReps: sumReps(todayEntries),
-    }
-  })
-
-  return rows
-    .filter((row) => row.totalBreaks > 0)
-    .sort((left, right) => right.totalReps - left.totalReps || right.todayReps - left.todayReps)
-    .slice(0, 20)
-}
-
 export function normalizeImportedEntries(rawEntries: unknown, now = new Date()): MovementEntry[] {
   if (!Array.isArray(rawEntries)) {
     throw new ValidationError('Entries must be an array.')
@@ -379,18 +348,6 @@ function isStoredMovementEntry(value: unknown): value is StoredMovementEntry {
     typeof entry.userId === 'string' &&
     !Number.isNaN(new Date(entry.completedAt).getTime())
   )
-}
-
-function sumReps(entries: Array<{ reps: number }>) {
-  return entries.reduce((total, entry) => total + entry.reps, 0)
-}
-
-function toDateKey(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-
-  return `${year}-${month}-${day}`
 }
 
 function isNodeError(error: unknown): error is NodeJS.ErrnoException {
