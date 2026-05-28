@@ -23,7 +23,7 @@ function App() {
   const [refreshUpdate, setRefreshUpdate] = useState<(() => void) | null>(null)
   const [notice, setNotice] = useState<Notice>({
     tone: 'neutral',
-    text: 'Ready for the next break.',
+    text: '',
   })
 
   const summary = useMemo(() => summarizeEntries(entries), [entries])
@@ -107,9 +107,6 @@ function App() {
             <Code size={18} />
             Source code
           </a>
-          <div className={`notice ${notice.tone}`} role="status">
-            {notice.text}
-          </div>
         </div>
       </header>
 
@@ -150,6 +147,10 @@ function App() {
             </button>
           )}
         </div>
+
+        <p className={`stage-status ${notice.tone}`} role="status">
+          {notice.text}
+        </p>
       </section>
 
       <section className="dashboard-grid">
