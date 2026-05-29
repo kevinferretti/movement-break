@@ -21,6 +21,9 @@ env:
   CLIENT_ORIGIN: https://movement.kevinferretti.com
   PUBLIC_URL: https://movement.kevinferretti.com
   DATA_FILE: /opt/movement-break/shared/data.json
+  CADDYFILE: /opt/shipshape/src/deploy/ovh/Caddyfile
+  CADDY_CONTAINER: shipshape-ovh-caddy-1
+  CADDY_PROXY_TARGET: 172.19.0.1:8787
 
 jobs:
   deploy:
@@ -112,7 +115,7 @@ jobs:
         run: |
           set -euo pipefail
           ssh -i ~/.ssh/movement_break_deploy "$DEPLOY_USER@$DEPLOY_HOST" \
-            "GITHUB_SHA='$GITHUB_SHA' DEPLOY_ROOT='$DEPLOY_ROOT' bash -s" <<'REMOTE'
+            "GITHUB_SHA='$GITHUB_SHA' DEPLOY_ROOT='$DEPLOY_ROOT' APP_PORT='$APP_PORT' CADDYFILE='$CADDYFILE' CADDY_CONTAINER='$CADDY_CONTAINER' CADDY_PROXY_TARGET='$CADDY_PROXY_TARGET' bash -s" <<'REMOTE'
           set -euo pipefail
 
           release="$DEPLOY_ROOT/releases/$GITHUB_SHA"
@@ -155,7 +158,24 @@ jobs:
           sudo systemctl daemon-reload
           sudo systemctl enable movement-break
           sudo systemctl restart movement-break
-          curl --fail --retry 10 --retry-delay 2 --retry-connrefused "http://127.0.0.1:8787/api/health"
+          curl --fail --retry 10 --retry-delay 2 --retry-connrefused "http://127.0.0.1:$APP_PORT/api/health"
+
+          if [ ! -f "$CADDYFILE" ]; then
+            echo "Expected Caddyfile not found: $CADDYFILE" >&2
+            exit 1
+          fi
+
+          if ! sudo grep -qE '^movement\.kevinferretti\.com[[:space:]]*\{' "$CADDYFILE"; then
+            printf '\nmovement.kevinferretti.com {\n  encode zstd gzip\n  reverse_proxy %s\n}\n' "$CADDY_PROXY_TARGET" \
+              | sudo tee -a "$CADDYFILE" > /dev/null
+          fi
+
+          if ! docker ps --format '{{.Names}}' | grep -qx "$CADDY_CONTAINER"; then
+            echo "Expected Caddy container not running: $CADDY_CONTAINER" >&2
+            exit 1
+          fi
+
+          docker exec "$CADDY_CONTAINER" caddy reload --config /etc/caddy/Caddyfile
 
           current_release="$(readlink -f "$DEPLOY_ROOT/current")"
           find "$DEPLOY_ROOT/releases" -mindepth 1 -maxdepth 1 -type d ! -samefile "$current_release" -printf '%T@ %p\n' \
@@ -164,3 +184,9 @@ jobs:
             | cut -d' ' -f2- \
             | xargs -r rm -rf
           REMOTE
+
+      - name: Verify public endpoint
+        if: env.DEPLOY_SECRETS_CONFIGURED == 'true'
+        run: |
+          set -euo pipefail
+          curl --fail --retry 10 --retry-delay 3 --retry-all-errors "$PUBLIC_URL/api/health"
