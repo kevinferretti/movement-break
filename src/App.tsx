@@ -60,7 +60,6 @@ function App() {
   const [authStatus, setAuthStatus] = useState<'loading' | 'ready'>('loading')
   const [authProviders, setAuthProviders] = useState<AuthProvider[]>([])
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
-  const [syncNotice, setSyncNotice] = useState('')
   const [refreshUpdate, setRefreshUpdate] = useState<(() => void) | null>(null)
   const [notice, setNotice] = useState<Notice>({
     tone: 'neutral',
@@ -119,11 +118,6 @@ function App() {
 
           setCurrentUser(importResult.user)
           setEntries(importResult.entries)
-          setSyncNotice(
-            importResult.importedCount > 0
-              ? `Imported ${importResult.importedCount} local breaks.`
-              : 'Local import locked.',
-          )
 
           return
         }
@@ -136,10 +130,9 @@ function App() {
 
         setCurrentUser(session.user)
         setEntries(serverEntries.entries)
-        setSyncNotice('Local import locked.')
       } catch (error) {
         if (isMounted) {
-          setSyncNotice(getErrorMessage(error))
+          setNotice({ tone: 'error', text: getErrorMessage(error) })
         }
       } finally {
         if (isMounted) {
@@ -254,9 +247,8 @@ function App() {
     try {
       await logOut()
       setCurrentUser(null)
-      setSyncNotice('')
     } catch (error) {
-      setSyncNotice(getErrorMessage(error))
+      setNotice({ tone: 'error', text: getErrorMessage(error) })
     }
   }
 
@@ -385,7 +377,6 @@ function App() {
           <div className="sync-summary">
             <span>{currentUser ? 'Signed in' : authStatus === 'loading' ? 'Checking login' : 'Local only'}</span>
             <strong>{currentUser?.displayName ?? (authProviders.length > 0 ? 'Not signed in' : 'Login not configured')}</strong>
-            {syncNotice ? <small>{syncNotice}</small> : null}
           </div>
         </section>
       </section>

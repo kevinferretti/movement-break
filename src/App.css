@@ -338,10 +338,6 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
-.sync-summary small {
-  line-height: 1.35;
-}
-
 input {
   width: 100%;
   min-height: 42px;
