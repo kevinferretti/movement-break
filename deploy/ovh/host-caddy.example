@@ -1,8 +1,8 @@
-# Example only: merge this site block into the OVH host's global Caddyfile.
-# The Movement Break deployment runs the app with systemd on the host and does
-# not own the public reverse proxy.
+# Example only: merge this site block into the shared edge-proxy Caddyfile.
+# The Movement Break app runs as a Docker Compose service attached to the
+# external edge-proxy network with the movement-break alias.
 
 movement.kevinferretti.com {
   encode zstd gzip
-  reverse_proxy 127.0.0.1:8787
+  reverse_proxy movement-break:8787
 }

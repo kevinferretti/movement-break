@@ -1,0 +1,32 @@
+name: movement-break
+
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: movement-break:latest
+    restart: unless-stopped
+    env_file:
+      - ${MOVEMENT_BREAK_ENV_FILE:-/opt/movement-break/shared/.env}
+    environment:
+      NODE_ENV: production
+      PORT: "8787"
+    volumes:
+      - ${MOVEMENT_BREAK_SHARED_DIR:-/opt/movement-break/shared}:/opt/movement-break/shared
+    expose:
+      - "8787"
+    networks:
+      edge-proxy:
+        aliases:
+          - movement-break
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8787/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  edge-proxy:
+    external: true
+

@@ -9,6 +9,7 @@ A small PWA for pushup breaks. It stores completion stats and personal preferenc
 - Service worker and web app manifest
 - Browser `localStorage` for signed-out stats
 - Server-side OAuth sessions and persisted stats
+- Docker Compose production deployment
 
 ## Local Setup
 
@@ -57,9 +58,9 @@ npm run lint         # eslint
 
 ## Deployment Notes
 
-The frontend needs HTTPS for mobile installation outside local development. Production serves the Vite build through the Express server on OVH. The public reverse proxy is managed outside this app so the same box can host multiple unrelated apps.
+The frontend needs HTTPS for mobile installation outside local development. Production serves the Vite build through the Express server on OVH. The public reverse proxy is managed by a shared `edge-proxy` Docker stack so the same box can host multiple unrelated apps.
 
-The deployed app listens on port `8787`. Merge `deploy/ovh/host-caddy.example` into the host's global Caddyfile to route `movement.kevinferretti.com` to this app.
+The deployed app runs as a Docker Compose stack named `movement-break`, listens on container port `8787`, and joins the external Docker network `edge-proxy` with the `movement-break` alias. Merge `deploy/ovh/host-caddy.example` into the shared edge-proxy Caddyfile to route `movement.kevinferretti.com` to this app.
 
 Production OAuth callback URLs:
 
@@ -90,4 +91,4 @@ OAUTH_GOOGLE_CLIENT_ID
 OAUTH_GOOGLE_CLIENT_SECRET
 ```
 
-The deployed service runs from `/opt/movement-break/current` and is managed by `systemd` as `movement-break`. Persistent app data is stored in `/opt/movement-break/shared/data.json`.
+The deployed stack builds from `/opt/movement-break/current` and is managed by Docker Compose as project `movement-break`. Persistent app data is stored in `/opt/movement-break/shared/data.json`, mounted into the app container from `/opt/movement-break/shared`.

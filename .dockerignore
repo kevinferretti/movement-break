@@ -1,0 +1,13 @@
+.git
+.github
+.data
+.deploy
+.env
+.env.*
+artifacts
+data
+dist
+node_modules
+*.log
+*.tgz
+

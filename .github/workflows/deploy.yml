@@ -76,12 +76,16 @@ jobs:
         if: env.DEPLOY_SECRETS_CONFIGURED == 'true'
         run: |
           set -euo pipefail
-          release_dir="$(mktemp -d)"
-          mkdir -p "$release_dir/src"
-          cp package.json package-lock.json "$release_dir/"
-          cp -R dist server "$release_dir/"
-          cp -R src/domain "$release_dir/src/domain"
-          tar -czf movement-break-${GITHUB_SHA}.tgz -C "$release_dir" .
+          tar \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='dist' \
+            --exclude='.data' \
+            --exclude='.deploy' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='*.tgz' \
+            -czf movement-break-${GITHUB_SHA}.tgz .
 
       - name: Write production env
         if: env.DEPLOY_SECRETS_CONFIGURED == 'true'
@@ -125,37 +129,14 @@ jobs:
           chmod 600 "$DEPLOY_ROOT/shared/.env"
           ln -sfn "$DEPLOY_ROOT/shared/.env" "$release/.env"
 
-          cd "$release"
-          npm ci --omit=dev
           ln -sfn "$release" "$DEPLOY_ROOT/current"
 
-          sudo tee /etc/systemd/system/movement-break.service > /dev/null <<'SERVICE'
-          [Unit]
-          Description=Movement Break PWA
-          Wants=network-online.target
-          After=network-online.target
+          docker network create edge-proxy >/dev/null 2>&1 || true
 
-          [Service]
-          Type=simple
-          User=ubuntu
-          WorkingDirectory=/opt/movement-break/current
-          EnvironmentFile=/opt/movement-break/shared/.env
-          Environment=NODE_ENV=production
-          ExecStart=/opt/movement-break/current/node_modules/.bin/tsx server/index.ts
-          Restart=always
-          RestartSec=5
-          TimeoutStopSec=10
-          KillMode=mixed
-          NoNewPrivileges=true
-
-          [Install]
-          WantedBy=multi-user.target
-          SERVICE
-
-          sudo systemctl daemon-reload
-          sudo systemctl enable movement-break
-          sudo systemctl restart movement-break
-          curl --fail --retry 10 --retry-delay 2 --retry-connrefused "http://127.0.0.1:$APP_PORT/api/health"
+          cd "$release"
+          docker compose -p movement-break -f deploy/ovh/docker-compose.yml up -d --build --remove-orphans
+          docker compose -p movement-break -f deploy/ovh/docker-compose.yml exec -T app \
+            node -e "fetch('http://127.0.0.1:$APP_PORT/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
           current_release="$(readlink -f "$DEPLOY_ROOT/current")"
           find "$DEPLOY_ROOT/releases" -mindepth 1 -maxdepth 1 -type d ! -samefile "$current_release" -printf '%T@ %p\n' \
