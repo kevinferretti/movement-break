@@ -1,4 +1,4 @@
-const CACHE_NAME = 'movement-break-shell-v12'
+const CACHE_NAME = 'movement-break-shell-v13'
 const SHELL_ASSETS = ['/', '/manifest.webmanifest', '/icon.svg']
 const UPDATE_READY_MESSAGE = 'MOVEMENT_BREAK_UPDATE_READY'
 

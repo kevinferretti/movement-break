@@ -47,7 +47,7 @@ npm run lint         # eslint
 ## Current MVP
 
 - Pushups only
-- Fixed rep options: `1-10` and `20`
+- Fixed random rep options: `5-20` and `30`
 - Random rep roll
 - Configurable direct rep preset, default `20`
 - Completion logging
