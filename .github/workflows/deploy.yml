@@ -137,8 +137,20 @@ jobs:
 
           cd "$release"
           docker compose -p movement-break -f deploy/ovh/docker-compose.yml up -d --build --remove-orphans
-          docker compose -p movement-break -f deploy/ovh/docker-compose.yml exec -T app \
-            node -e "fetch('http://127.0.0.1:$APP_PORT/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+          for attempt in $(seq 1 20); do
+            if docker compose -p movement-break -f deploy/ovh/docker-compose.yml exec -T app \
+              node -e "fetch('http://127.0.0.1:$APP_PORT/api/health').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"; then
+              break
+            fi
+
+            if [ "$attempt" -eq 20 ]; then
+              echo "Movement Break container did not become healthy." >&2
+              docker compose -p movement-break -f deploy/ovh/docker-compose.yml logs --tail=100 app >&2
+              exit 1
+            fi
+
+            sleep 2
+          done
 
           current_release="$(readlink -f "$DEPLOY_ROOT/current")"
           find "$DEPLOY_ROOT/releases" -mindepth 1 -maxdepth 1 -type d ! -samefile "$current_release" -printf '%T@ %p\n' \
