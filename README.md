@@ -57,7 +57,9 @@ npm run lint         # eslint
 
 ## Deployment Notes
 
-The frontend needs HTTPS for mobile installation outside local development. Production serves the Vite build through the Express server behind Caddy on OVH.
+The frontend needs HTTPS for mobile installation outside local development. Production serves the Vite build through the Express server on OVH. The public reverse proxy is managed outside this app so the same box can host multiple unrelated apps.
+
+The deployed app listens on port `8787`. Merge `deploy/ovh/host-caddy.example` into the host's global Caddyfile to route `movement.kevinferretti.com` to this app.
 
 Production OAuth callback URLs:
 
