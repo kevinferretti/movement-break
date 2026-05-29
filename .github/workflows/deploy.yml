@@ -76,6 +76,7 @@ jobs:
         if: env.DEPLOY_SECRETS_CONFIGURED == 'true'
         run: |
           set -euo pipefail
+          archive="$RUNNER_TEMP/movement-break-${GITHUB_SHA}.tgz"
           tar \
             --exclude='.git' \
             --exclude='node_modules' \
@@ -85,7 +86,8 @@ jobs:
             --exclude='.env' \
             --exclude='.env.*' \
             --exclude='*.tgz' \
-            -czf movement-break-${GITHUB_SHA}.tgz .
+            -czf "$archive" .
+          cp "$archive" movement-break-${GITHUB_SHA}.tgz
 
       - name: Write production env
         if: env.DEPLOY_SECRETS_CONFIGURED == 'true'
