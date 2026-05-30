@@ -75,6 +75,7 @@ function App() {
   const [authProviders, setAuthProviders] = useState<AuthProvider[]>([])
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
   const [refreshUpdate, setRefreshUpdate] = useState<(() => void) | null>(null)
+  const [activeStatsMovement, setActiveStatsMovement] = useState<Movement>('pushups')
   const [notice, setNotice] = useState<Notice>({
     tone: 'neutral',
     text: '',
@@ -95,6 +96,7 @@ function App() {
       }),
     [entries],
   )
+  const activeMovementStats = movementStats.find((movementStat) => movementStat.movement === activeStatsMovement)
 
   useEffect(() => {
     saveEntries(entries)
@@ -373,11 +375,25 @@ function App() {
             <h2 id="stats-heading">Stats</h2>
           </div>
 
-          <div className="movement-stat-sections">
+          <div className="movement-tabs" role="tablist" aria-label="Stats movement">
             {movementStats.map((movementStat) => (
-              <MovementStatsSection key={movementStat.movement} {...movementStat} />
+              <button
+                className={`movement-tab ${movementStat.movement === activeStatsMovement ? 'active' : ''}`}
+                type="button"
+                role="tab"
+                id={`${movementStat.movement}-stats-tab`}
+                aria-controls={`${movementStat.movement}-stats-panel`}
+                aria-selected={movementStat.movement === activeStatsMovement}
+                key={movementStat.movement}
+                onClick={() => setActiveStatsMovement(movementStat.movement)}
+              >
+                <span>{formatMovementLabel(movementStat.movement)}</span>
+                <strong>{movementStat.summary.totalReps}</strong>
+              </button>
             ))}
           </div>
+
+          {activeMovementStats ? <MovementStatsSection {...activeMovementStats} /> : null}
         </section>
 
         <section className="settings-panel" aria-labelledby="settings-heading">
@@ -516,7 +532,12 @@ function MovementStatsSection({
   const headingId = `${movement}-stats-heading`
 
   return (
-    <section className="movement-stat-section" aria-labelledby={headingId}>
+    <section
+      className="movement-stat-section"
+      role="tabpanel"
+      id={`${movement}-stats-panel`}
+      aria-labelledby={`${movement}-stats-tab`}
+    >
       <div className="movement-stat-heading">
         <h3 id={headingId}>{formatMovementLabel(movement)}</h3>
         <span>{summary.totalBreaks} logged</span>

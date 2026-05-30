@@ -368,19 +368,55 @@ input:focus-visible {
   font-size: 1rem;
 }
 
-.movement-stat-sections {
-  display: grid;
-  gap: 22px;
-}
-
 .movement-stat-section {
+  margin-top: 16px;
   display: grid;
   gap: 14px;
 }
 
-.movement-stat-section + .movement-stat-section {
-  padding-top: 20px;
-  border-top: 1px solid var(--line);
+.movement-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--blue) 7%, var(--paper));
+}
+
+.movement-tab {
+  min-width: 0;
+  min-height: 54px;
+  padding: 8px 12px;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  box-shadow: none;
+}
+
+.movement-tab.active {
+  color: var(--ink);
+  background: var(--paper);
+  border-color: var(--line);
+  box-shadow: 0 10px 24px rgba(23, 32, 38, 0.08);
+}
+
+.movement-tab span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.82rem;
+}
+
+.movement-tab strong {
+  color: inherit;
+  font-size: 1.28rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .movement-stat-heading {
