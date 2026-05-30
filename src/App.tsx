@@ -44,6 +44,7 @@ const FALLBACK_ROLL: MovementBreak = {
   movement: 'pushups',
   reps: 1,
 }
+const STAT_MOVEMENTS: readonly Movement[] = ['pushups', 'pullups']
 
 type MovementBreak = {
   movement: Movement
@@ -79,9 +80,21 @@ function App() {
     text: '',
   })
 
-  const summary = useMemo(() => summarizeEntries(entries), [entries])
-  const dailyTotals = useMemo(() => buildDailyTotals(entries, 7), [entries])
-  const maxDailyReps = Math.max(1, ...dailyTotals.map((day) => day.reps))
+  const movementStats = useMemo(
+    () =>
+      STAT_MOVEMENTS.map((movement) => {
+        const movementEntries = entries.filter((entry) => entry.movement === movement)
+        const dailyTotals = buildDailyTotals(movementEntries, 7)
+
+        return {
+          movement,
+          summary: summarizeEntries(movementEntries),
+          dailyTotals,
+          maxDailyReps: Math.max(1, ...dailyTotals.map((day) => day.reps)),
+        }
+      }),
+    [entries],
+  )
 
   useEffect(() => {
     saveEntries(entries)
@@ -360,24 +373,9 @@ function App() {
             <h2 id="stats-heading">Stats</h2>
           </div>
 
-          <div className="stat-grid">
-            <Metric label="Today" value={summary.todayReps} detail={`${summary.todayBreaks} breaks`} />
-            <Metric label="Average" value={summary.averageToday} detail="today" />
-            <Metric label="Lifetime" value={summary.totalReps} detail={`${summary.totalBreaks} breaks`} />
-          </div>
-
-          <div className="history-bars" aria-label="Seven day movement history">
-            {dailyTotals.map((day) => (
-              <div className="history-day" key={day.dateKey}>
-                <div className="bar-track">
-                  <div
-                    className="bar-fill"
-                    style={{ height: `${Math.max(5, (day.reps / maxDailyReps) * 100)}%` }}
-                  />
-                </div>
-                <span>{day.dateKey.slice(5).replace('-', '/')}</span>
-                <strong>{day.reps}</strong>
-              </div>
+          <div className="movement-stat-sections">
+            {movementStats.map((movementStat) => (
+              <MovementStatsSection key={movementStat.movement} {...movementStat} />
             ))}
           </div>
         </section>
@@ -501,6 +499,47 @@ function Metric({ label, value, detail }: { label: string; value: number; detail
       <strong>{value}</strong>
       <small>{detail}</small>
     </div>
+  )
+}
+
+function MovementStatsSection({
+  movement,
+  summary,
+  dailyTotals,
+  maxDailyReps,
+}: {
+  movement: Movement
+  summary: ReturnType<typeof summarizeEntries>
+  dailyTotals: ReturnType<typeof buildDailyTotals>
+  maxDailyReps: number
+}) {
+  const headingId = `${movement}-stats-heading`
+
+  return (
+    <section className="movement-stat-section" aria-labelledby={headingId}>
+      <div className="movement-stat-heading">
+        <h3 id={headingId}>{formatMovementLabel(movement)}</h3>
+        <span>{summary.totalBreaks} logged</span>
+      </div>
+
+      <div className="stat-grid">
+        <Metric label="Today" value={summary.todayReps} detail={`${summary.todayBreaks} breaks`} />
+        <Metric label="Average" value={summary.averageToday} detail="today" />
+        <Metric label="Lifetime" value={summary.totalReps} detail={`${summary.totalBreaks} breaks`} />
+      </div>
+
+      <div className="history-bars" aria-label={`Seven day ${formatMovementLabelLower(movement)} history`}>
+        {dailyTotals.map((day) => (
+          <div className="history-day" key={day.dateKey}>
+            <div className="bar-track">
+              <div className="bar-fill" style={{ height: `${Math.max(5, (day.reps / maxDailyReps) * 100)}%` }} />
+            </div>
+            <span>{day.dateKey.slice(5).replace('-', '/')}</span>
+            <strong>{day.reps}</strong>
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
 

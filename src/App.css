@@ -368,6 +368,43 @@ input:focus-visible {
   font-size: 1rem;
 }
 
+.movement-stat-sections {
+  display: grid;
+  gap: 22px;
+}
+
+.movement-stat-section {
+  display: grid;
+  gap: 14px;
+}
+
+.movement-stat-section + .movement-stat-section {
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.movement-stat-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.movement-stat-heading h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.08rem;
+  line-height: 1.2;
+}
+
+.movement-stat-heading span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -399,7 +436,6 @@ input:focus-visible {
 
 .history-bars {
   height: 186px;
-  margin-top: 20px;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 10px;
