@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties } from 'react'
 import {
   Activity,
   BarChart3,
@@ -16,6 +16,8 @@ import './App.css'
 import { normalizePreferences, type MovementPreferences } from './domain/preferences'
 import {
   MOVEMENT_ROLL_CONFIGS,
+  PULLUP_REPS,
+  PUSHUP_REPS,
   formatMovementLabel,
   formatMovementLabelLower,
   type Movement,
@@ -46,6 +48,22 @@ const FALLBACK_ROLL: MovementBreak = {
   reps: 1,
 }
 const STAT_MOVEMENTS: readonly Movement[] = ['pushups', 'pullups']
+const REP_ORBIT_OPTIONS = [
+  ...PUSHUP_REPS.map((reps, index) => ({
+    angle: -90 + (index * 360) / PUSHUP_REPS.length,
+    movement: 'pushups' as const,
+    orbit: 'outer' as const,
+    reps,
+    sequence: index,
+  })),
+  ...PULLUP_REPS.map((reps, index) => ({
+    angle: -120 + (index * 360) / PULLUP_REPS.length,
+    movement: 'pullups' as const,
+    orbit: 'inner' as const,
+    reps,
+    sequence: PUSHUP_REPS.length + index,
+  })),
+]
 
 type MovementBreak = {
   movement: Movement
@@ -337,16 +355,7 @@ function App() {
           <span>{displayBreak ? formatMovementLabel(displayBreak.movement) : 'Pushups or Pullups'}</span>
         </div>
 
-        <div
-          className={`rep-dial ${displayBreak === null ? 'empty' : ''} ${isRolling ? 'rolling' : ''} ${completionPulse ? 'complete' : ''}`}
-          aria-label={
-            displayBreak === null
-              ? 'No movement rolled yet'
-              : `${displayBreak.reps} ${formatMovementLabelLower(displayBreak.movement)}`
-          }
-        >
-          <span>{displayBreak?.reps ?? ''}</span>
-        </div>
+        <RepOrbitRandomizer displayBreak={displayBreak} isRolling={isRolling} completionPulse={completionPulse} />
 
         <div className={`break-actions ${queuedBreak ? 'queued' : 'ready'}`}>
           {queuedBreak ? (
@@ -374,7 +383,7 @@ function App() {
                 Roll
               </button>
               <button
-                className="direct-action"
+                className="direct-action pushups"
                 type="button"
                 onClick={() => queueDirectReps('pushups')}
                 disabled={isRolling}
@@ -382,7 +391,7 @@ function App() {
                 Queue {preferences.directReps} Pushups
               </button>
               <button
-                className="direct-action"
+                className="direct-action pullups"
                 type="button"
                 onClick={() => queueDirectReps('pullups')}
                 disabled={isRolling}
@@ -474,6 +483,56 @@ function App() {
         </div>
       ) : null}
     </main>
+  )
+}
+
+function RepOrbitRandomizer({
+  completionPulse,
+  displayBreak,
+  isRolling,
+}: {
+  completionPulse: boolean
+  displayBreak: MovementBreak | null
+  isRolling: boolean
+}) {
+  const movementClass = displayBreak ? `movement-${displayBreak.movement}` : ''
+
+  return (
+    <div
+      className={`rep-orbit ${displayBreak === null ? 'empty' : ''} ${movementClass} ${isRolling ? 'rolling' : ''} ${completionPulse ? 'complete' : ''}`}
+      aria-label={
+        displayBreak === null
+          ? 'No movement rolled yet'
+          : `${displayBreak.reps} ${formatMovementLabelLower(displayBreak.movement)}`
+      }
+    >
+      <div className="rep-orbit-path outer" aria-hidden="true" />
+      <div className="rep-orbit-path inner" aria-hidden="true" />
+      <div className="rep-orbit-options" aria-hidden="true">
+        {REP_ORBIT_OPTIONS.map((option) => {
+          const isActive = displayBreak?.movement === option.movement && displayBreak.reps === option.reps
+          const dotStyle = {
+            '--orbit-angle': `${option.angle}deg`,
+            '--orbit-angle-inverse': `${option.angle * -1}deg`,
+            '--dot-delay': `${option.sequence * 18}ms`,
+          } as CSSProperties
+
+          return (
+            <span
+              className={`rep-orbit-dot ${option.movement} ${option.orbit} ${isActive ? 'active' : ''}`}
+              key={`${option.movement}-${option.reps}`}
+              style={dotStyle}
+            >
+              <span className="rep-orbit-dot-core">{isActive ? option.reps : ''}</span>
+            </span>
+          )
+        })}
+      </div>
+      <div className="rep-orbit-core">
+        <span className="rep-orbit-number">{displayBreak?.reps ?? '?'}</span>
+        <span className="rep-orbit-movement">{displayBreak ? formatMovementLabel(displayBreak.movement) : 'Ready'}</span>
+      </div>
+    </div>
   )
 }
 

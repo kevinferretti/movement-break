@@ -123,20 +123,22 @@
 
 .break-stage {
   width: min(100%, 820px);
-  min-height: 410px;
+  min-height: 450px;
   margin-inline: auto;
+  position: relative;
+  overflow: hidden;
   display: grid;
   grid-template-rows: auto auto auto auto;
   align-content: center;
   align-items: center;
   justify-items: center;
-  gap: 24px;
+  gap: 22px;
   padding: clamp(28px, 5vw, 44px);
   border: 1px solid var(--line-strong);
-  border-radius: 8px;
+  border-radius: 18px;
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--yellow) 18%, transparent), transparent 34%),
-    linear-gradient(270deg, color-mix(in srgb, var(--green) 15%, transparent), transparent 36%),
+    linear-gradient(135deg, color-mix(in srgb, var(--yellow) 18%, transparent), transparent 38%),
+    linear-gradient(315deg, color-mix(in srgb, var(--green) 13%, transparent), transparent 36%),
     var(--panel);
   box-shadow: var(--shadow);
 }
@@ -151,47 +153,222 @@
   font-size: 0.78rem;
 }
 
-.rep-dial {
-  width: clamp(210px, 34vw, 300px);
+.rep-orbit {
+  --movement-color: var(--yellow);
+  --movement-soft: color-mix(in srgb, var(--yellow) 28%, var(--panel));
+  width: clamp(238px, 36vw, 326px);
   aspect-ratio: 1;
+  position: relative;
   display: grid;
   place-items: center;
-  color: var(--paper);
-  background:
-    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--coral) 72%, white), var(--coral) 42%, var(--ink) 43%),
-    var(--ink);
-  background-clip: padding-box;
-  border: 10px solid var(--paper);
-  border-radius: 50%;
-  box-shadow:
-    0 22px 60px rgba(23, 32, 38, 0.18),
-    inset 0 0 0 12px color-mix(in srgb, var(--yellow) 70%, white);
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease;
+  isolation: isolate;
 }
 
-.rep-dial span {
-  min-width: 1ch;
-  font-size: clamp(5.8rem, 16vw, 9rem);
-  line-height: 1;
+.rep-orbit.movement-pushups {
+  --movement-color: var(--coral);
+  --movement-soft: color-mix(in srgb, var(--coral) 19%, var(--panel));
+}
+
+.rep-orbit.movement-pullups {
+  --movement-color: var(--green);
+  --movement-soft: color-mix(in srgb, var(--green) 20%, var(--panel));
+}
+
+.rep-orbit::before {
+  content: '';
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--movement-soft) 0 47%, transparent 48%);
+  opacity: 0.86;
+}
+
+.rep-orbit-path {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.rep-orbit-path.outer {
+  width: 86%;
+  height: 86%;
+  border: 2px solid var(--line-strong);
+}
+
+.rep-orbit-path.inner {
+  width: 63%;
+  height: 63%;
+  border: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
+}
+
+.rep-orbit-options {
+  position: absolute;
+  inset: 0;
+  transform-origin: center;
+  transition:
+    transform 360ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 180ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.rep-orbit-dot {
+  --orbit-translate: clamp(-139px, -15.4vw, -100px);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  transform: translate(-50%, -50%) rotate(var(--orbit-angle)) translateY(var(--orbit-translate))
+    rotate(var(--orbit-angle-inverse));
+  z-index: 1;
+}
+
+.rep-orbit-dot.inner {
+  --orbit-translate: clamp(-102px, -11.2vw, -74px);
+}
+
+.rep-orbit-dot-core {
+  width: 12px;
+  height: 12px;
+  display: grid;
+  place-items: center;
+  color: #172026;
+  background: var(--coral);
+  border-radius: 50%;
+  font-size: 0;
   font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.68;
+  transition:
+    opacity 180ms cubic-bezier(0.32, 0.72, 0, 1),
+    transform 180ms cubic-bezier(0.32, 0.72, 0, 1),
+    background 180ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.rep-orbit-dot.pullups .rep-orbit-dot-core {
+  width: 10px;
+  height: 10px;
+  background: var(--green);
+}
+
+.rep-orbit-dot.active {
+  z-index: 3;
+}
+
+.rep-orbit-dot.active .rep-orbit-dot-core {
+  background: var(--yellow);
+  box-shadow: 0 0 0 2px var(--ink);
+  font-size: 0.55rem;
+  opacity: 1;
+  transform: scale(1.42);
+}
+
+.rep-orbit-core {
+  width: 50%;
+  aspect-ratio: 1;
+  position: relative;
+  z-index: 2;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 4px;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--panel) 92%, white);
+  border: 4px solid var(--ink);
+  border-radius: 50%;
+  box-shadow:
+    0 18px 42px rgba(23, 32, 38, 0.14),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.42);
+  transition:
+    border-color 180ms cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 180ms cubic-bezier(0.32, 0.72, 0, 1),
+    transform 180ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.rep-orbit-number {
+  min-width: 1.25ch;
+  font-size: clamp(4.6rem, 12vw, 6.75rem);
+  line-height: 0.82;
+  font-weight: 900;
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
-.rep-dial.empty span {
-  opacity: 0;
+.rep-orbit-movement {
+  color: var(--movement-color);
+  font-size: clamp(1rem, 2.2vw, 1.36rem);
+  line-height: 1;
+  font-weight: 900;
 }
 
-.rep-dial.rolling {
-  transform: rotate(-2deg) scale(1.02);
+.rep-orbit.empty .rep-orbit-core {
+  border-color: color-mix(in srgb, var(--ink) 28%, var(--line));
 }
 
-.rep-dial.complete {
+.rep-orbit.empty .rep-orbit-number {
+  opacity: 0.22;
+}
+
+.rep-orbit.empty .rep-orbit-movement {
+  color: var(--muted);
+}
+
+.rep-orbit.rolling .rep-orbit-options {
+  animation: rep-orbit-spin 700ms cubic-bezier(0.32, 0.72, 0, 1) infinite;
+  will-change: transform;
+}
+
+.rep-orbit.rolling .rep-orbit-dot-core {
+  animation: rep-orbit-dot-pulse 520ms cubic-bezier(0.32, 0.72, 0, 1) infinite alternate;
+  animation-delay: var(--dot-delay);
+}
+
+.rep-orbit.rolling .rep-orbit-core {
+  transform: scale(0.985);
+}
+
+.rep-orbit.complete .rep-orbit-core {
+  border-color: var(--green);
   transform: scale(1.05);
   box-shadow:
-    0 26px 76px rgba(47, 143, 131, 0.3),
-    inset 0 0 0 12px color-mix(in srgb, var(--green) 75%, white);
+    0 24px 58px rgba(47, 143, 131, 0.24),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.46);
+}
+
+@keyframes rep-orbit-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes rep-orbit-dot-pulse {
+  from {
+    opacity: 0.34;
+    transform: scale(0.72);
+  }
+
+  to {
+    opacity: 0.96;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rep-orbit.rolling .rep-orbit-options,
+  .rep-orbit.rolling .rep-orbit-dot-core {
+    animation: none;
+  }
+
+  .rep-orbit-options,
+  .rep-orbit-dot-core,
+  .rep-orbit-core,
+  button {
+    transition: none;
+  }
 }
 
 .break-actions {
@@ -220,9 +397,9 @@ button {
   letter-spacing: 0;
   cursor: pointer;
   transition:
-    transform 140ms ease,
-    opacity 140ms ease,
-    box-shadow 140ms ease;
+    transform 140ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 140ms cubic-bezier(0.32, 0.72, 0, 1),
+    box-shadow 140ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 button:hover:not(:disabled) {
@@ -250,16 +427,26 @@ button:disabled {
 .primary-action {
   flex: 1;
   padding: 0 24px;
-  color: var(--paper);
-  background: var(--ink);
+  color: #172026;
+  background: var(--yellow);
+  box-shadow: 0 12px 28px rgba(247, 184, 1, 0.18);
 }
 
 .direct-action {
   flex: 1;
   padding: 0 20px;
-  color: var(--ink);
-  background: color-mix(in srgb, var(--yellow) 34%, var(--paper));
-  border: 1px solid color-mix(in srgb, var(--yellow) 52%, var(--line));
+  color: #172026;
+  border: 1px solid transparent;
+}
+
+.direct-action.pushups {
+  background: var(--coral);
+  box-shadow: 0 12px 28px rgba(243, 111, 69, 0.16);
+}
+
+.direct-action.pullups {
+  background: var(--green);
+  box-shadow: 0 12px 28px rgba(47, 143, 131, 0.16);
 }
 
 .cancel-action {
