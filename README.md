@@ -84,11 +84,17 @@ Required GitHub repository secrets:
 
 ```text
 OVH_SSH_PRIVATE_KEY   # private deploy key for codex@movement.kevinferretti.com
-OVH_SSH_KNOWN_HOSTS   # output from: ssh-keyscan -t ed25519 movement.kevinferretti.com
+OVH_SSH_KNOWN_HOSTS   # Tailscale SSH host key for 100.78.38.82
+TS_OAUTH_CLIENT_ID    # Tailscale federated identity client id
+TS_AUDIENCE           # Tailscale federated identity audience
 OAUTH_GITHUB_CLIENT_ID
 OAUTH_GITHUB_CLIENT_SECRET
 OAUTH_GOOGLE_CLIENT_ID
 OAUTH_GOOGLE_CLIENT_SECRET
 ```
+
+The deploy job joins the tailnet as `tag:github-actions` and deploys to the VM
+over its Tailscale IP. The tailnet policy must allow that tag to reach
+`100.78.38.82:22`.
 
 The deployed stack builds from `/opt/movement-break/current` and is managed by Docker Compose as project `movement-break`. Persistent app data is stored in `/opt/movement-break/shared/data.json`, mounted into the app container from `/opt/movement-break/shared`.

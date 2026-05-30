@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: production-deploy
@@ -14,7 +15,7 @@ concurrency:
 
 env:
   NODE_VERSION: '22'
-  DEPLOY_HOST: movement.kevinferretti.com
+  DEPLOY_HOST: 100.78.38.82
   DEPLOY_PORT: '22'
   DEPLOY_USER: codex
   DEPLOY_ROOT: /opt/movement-break
@@ -22,6 +23,7 @@ env:
   CLIENT_ORIGIN: https://movement.kevinferretti.com
   PUBLIC_URL: https://movement.kevinferretti.com
   DATA_FILE: /opt/movement-break/shared/data.json
+  TAILSCALE_TAGS: tag:github-actions
   SSH_CONNECT_TIMEOUT: '15'
   SSH_RETRY_ATTEMPTS: '5'
   SSH_RETRY_DELAY: '10'
@@ -32,17 +34,20 @@ jobs:
     env:
       OVH_SSH_PRIVATE_KEY: ${{ secrets.OVH_SSH_PRIVATE_KEY }}
       OVH_SSH_KNOWN_HOSTS: ${{ secrets.OVH_SSH_KNOWN_HOSTS }}
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_AUDIENCE: ${{ secrets.TS_AUDIENCE }}
       OAUTH_GITHUB_CLIENT_ID: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
       OAUTH_GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
       OAUTH_GOOGLE_CLIENT_ID: ${{ secrets.OAUTH_GOOGLE_CLIENT_ID }}
       OAUTH_GOOGLE_CLIENT_SECRET: ${{ secrets.OAUTH_GOOGLE_CLIENT_SECRET }}
-      DEPLOY_SECRETS_CONFIGURED: ${{ secrets.OVH_SSH_PRIVATE_KEY != '' && secrets.OVH_SSH_KNOWN_HOSTS != '' }}
+      DEPLOY_SECRETS_CONFIGURED: ${{ secrets.OVH_SSH_PRIVATE_KEY != '' && secrets.OVH_SSH_KNOWN_HOSTS != '' && secrets.TS_OAUTH_CLIENT_ID != '' && secrets.TS_AUDIENCE != '' }}
 
     steps:
       - name: Check required secrets
         if: env.DEPLOY_SECRETS_CONFIGURED != 'true'
         run: |
-          echo "::notice::Deployment skipped because one or more required repository secrets are missing."
+          echo "::error::Deployment requires OVH_SSH_PRIVATE_KEY, OVH_SSH_KNOWN_HOSTS, TS_OAUTH_CLIENT_ID, and TS_AUDIENCE."
+          exit 1
 
       - name: Checkout
         if: env.DEPLOY_SECRETS_CONFIGURED == 'true'
@@ -65,6 +70,15 @@ jobs:
           npm run lint
           npm run test
           npm run build
+
+      - name: Connect to tailnet
+        if: env.DEPLOY_SECRETS_CONFIGURED == 'true'
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: ${{ env.TAILSCALE_TAGS }}
+          ping: ${{ env.DEPLOY_HOST }}
 
       - name: Prepare SSH
         if: env.DEPLOY_SECRETS_CONFIGURED == 'true'
