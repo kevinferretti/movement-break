@@ -15,12 +15,16 @@ concurrency:
 env:
   NODE_VERSION: '22'
   DEPLOY_HOST: movement.kevinferretti.com
+  DEPLOY_PORT: '22'
   DEPLOY_USER: codex
   DEPLOY_ROOT: /opt/movement-break
   APP_PORT: '8787'
   CLIENT_ORIGIN: https://movement.kevinferretti.com
   PUBLIC_URL: https://movement.kevinferretti.com
   DATA_FILE: /opt/movement-break/shared/data.json
+  SSH_CONNECT_TIMEOUT: '15'
+  SSH_RETRY_ATTEMPTS: '5'
+  SSH_RETRY_DELAY: '10'
 
 jobs:
   deploy:
@@ -72,6 +76,28 @@ jobs:
           printf '%s\n' "$OVH_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
+      - name: Check SSH reachability
+        if: env.DEPLOY_SECRETS_CONFIGURED == 'true'
+        run: |
+          set -euo pipefail
+          runner_ip="$(curl -fsS --max-time 10 https://api.ipify.org || true)"
+          echo "Runner public IP: ${runner_ip:-unknown}"
+
+          for attempt in $(seq 1 "$SSH_RETRY_ATTEMPTS"); do
+            echo "SSH reachability attempt $attempt/$SSH_RETRY_ATTEMPTS"
+
+            if ssh-keyscan -T "$SSH_CONNECT_TIMEOUT" -p "$DEPLOY_PORT" -t ed25519 "$DEPLOY_HOST" >/dev/null 2>&1; then
+              exit 0
+            fi
+
+            if [ "$attempt" -lt "$SSH_RETRY_ATTEMPTS" ]; then
+              sleep "$SSH_RETRY_DELAY"
+            fi
+          done
+
+          echo "Timed out connecting to $DEPLOY_HOST:$DEPLOY_PORT from GitHub Actions." >&2
+          exit 1
+
       - name: Package release
         if: env.DEPLOY_SECRETS_CONFIGURED == 'true'
         run: |
@@ -109,16 +135,50 @@ jobs:
         if: env.DEPLOY_SECRETS_CONFIGURED == 'true'
         run: |
           set -euo pipefail
-          scp -i ~/.ssh/movement_break_deploy \
-            movement-break-${GITHUB_SHA}.tgz movement-break.env \
-            "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"
+          ssh_options=(
+            -i ~/.ssh/movement_break_deploy
+            -o BatchMode=yes
+            -o ConnectTimeout="$SSH_CONNECT_TIMEOUT"
+            -o ConnectionAttempts=1
+            -o ServerAliveInterval=15
+            -o ServerAliveCountMax=2
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts"
+          )
+
+          for attempt in $(seq 1 "$SSH_RETRY_ATTEMPTS"); do
+            echo "Upload attempt $attempt/$SSH_RETRY_ATTEMPTS"
+
+            if scp "${ssh_options[@]}" -P "$DEPLOY_PORT" \
+              movement-break-${GITHUB_SHA}.tgz movement-break.env \
+              "$DEPLOY_USER@$DEPLOY_HOST:/tmp/"; then
+              exit 0
+            fi
+
+            if [ "$attempt" -lt "$SSH_RETRY_ATTEMPTS" ]; then
+              sleep "$SSH_RETRY_DELAY"
+            fi
+          done
+
+          echo "Release upload failed after $SSH_RETRY_ATTEMPTS attempts." >&2
+          exit 1
 
       - name: Activate release
         if: env.DEPLOY_SECRETS_CONFIGURED == 'true'
         run: |
           set -euo pipefail
-          ssh -i ~/.ssh/movement_break_deploy "$DEPLOY_USER@$DEPLOY_HOST" \
-            "GITHUB_SHA='$GITHUB_SHA' DEPLOY_ROOT='$DEPLOY_ROOT' APP_PORT='$APP_PORT' bash -s" <<'REMOTE'
+          ssh_options=(
+            -i ~/.ssh/movement_break_deploy
+            -o BatchMode=yes
+            -o ConnectTimeout="$SSH_CONNECT_TIMEOUT"
+            -o ConnectionAttempts=1
+            -o ServerAliveInterval=15
+            -o ServerAliveCountMax=2
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts"
+          )
+
+          activate_release() {
+            ssh "${ssh_options[@]}" -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+              "GITHUB_SHA='$GITHUB_SHA' DEPLOY_ROOT='$DEPLOY_ROOT' APP_PORT='$APP_PORT' bash -s" <<'REMOTE'
           set -euo pipefail
 
           release="$DEPLOY_ROOT/releases/$GITHUB_SHA"
@@ -159,6 +219,22 @@ jobs:
             | cut -d' ' -f2- \
             | xargs -r rm -rf
           REMOTE
+          }
+
+          for attempt in $(seq 1 "$SSH_RETRY_ATTEMPTS"); do
+            echo "Activation attempt $attempt/$SSH_RETRY_ATTEMPTS"
+
+            if activate_release; then
+              exit 0
+            fi
+
+            if [ "$attempt" -lt "$SSH_RETRY_ATTEMPTS" ]; then
+              sleep "$SSH_RETRY_DELAY"
+            fi
+          done
+
+          echo "Release activation failed after $SSH_RETRY_ATTEMPTS attempts." >&2
+          exit 1
 
       - name: Verify public endpoint
         if: env.DEPLOY_SECRETS_CONFIGURED == 'true'
