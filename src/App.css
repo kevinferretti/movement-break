@@ -402,7 +402,18 @@
 
 .break-actions.ready {
   display: grid;
-  grid-template-columns: minmax(86px, 0.68fr) repeat(3, minmax(130px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.break-actions.ready .primary-action {
+  grid-column: 1 / -1;
+  justify-self: start;
+  min-width: 128px;
+}
+
+.break-actions.ready .direct-action {
+  min-width: 0;
+  white-space: nowrap;
 }
 
 button {
@@ -836,6 +847,10 @@ input:focus-visible {
 
   .break-actions.ready {
     grid-template-columns: 1fr;
+  }
+
+  .break-actions.ready .primary-action {
+    justify-self: stretch;
   }
 
   .break-actions.queued {
