@@ -49,6 +49,7 @@ const FALLBACK_ROLL: MovementBreak = {
   reps: 1,
 }
 const STAT_MOVEMENTS: readonly Movement[] = ['pushups', 'pullups', 'deadlifts']
+const SETTING_MOVEMENTS = STAT_MOVEMENTS
 const REP_ORBIT_OPTIONS = [
   ...PUSHUP_REPS.map((reps, index) => ({
     angle: -90 + (index * 360) / PUSHUP_REPS.length,
@@ -224,19 +225,21 @@ function App() {
       return
     }
 
+    const enabledMovements = preferences.enabledMovements
+
     setIsRolling(true)
     setQueuedBreak(null)
-    setDisplayBreak(randomMovementBreak())
+    setDisplayBreak(randomMovementBreak(enabledMovements))
     setNotice({ tone: 'neutral', text: 'Rolling...' })
 
     let ticks = 0
     const interval = window.setInterval(() => {
       ticks += 1
-      setDisplayBreak(randomMovementBreak())
+      setDisplayBreak(randomMovementBreak(enabledMovements))
 
       if (ticks >= 12) {
         window.clearInterval(interval)
-        queueBreak(randomMovementBreak())
+        queueBreak(randomMovementBreak(enabledMovements))
       }
     }, 58)
   }
@@ -321,6 +324,22 @@ function App() {
     }))
   }
 
+  function updateMovementEnabled(movement: Movement, enabled: boolean) {
+    setPreferenceState((current) => ({
+      ...current,
+      preferences: normalizePreferences(
+        {
+          ...current.preferences,
+          enabledMovements: {
+            ...current.preferences.enabledMovements,
+            [movement]: enabled,
+          },
+        },
+        current.preferences,
+      ),
+    }))
+  }
+
   function startLogin(provider: AuthProvider) {
     window.location.assign(`/api/auth/${provider}/start`)
   }
@@ -363,7 +382,12 @@ function App() {
           <span>{displayBreak ? formatMovementLabel(displayBreak.movement) : 'Pushups, Pullups, or Deadlifts'}</span>
         </div>
 
-        <RepOrbitRandomizer displayBreak={displayBreak} isRolling={isRolling} completionPulse={completionPulse} />
+        <RepOrbitRandomizer
+          displayBreak={displayBreak}
+          enabledMovements={preferences.enabledMovements}
+          isRolling={isRolling}
+          completionPulse={completionPulse}
+        />
 
         <div className={`break-actions ${queuedBreak ? 'queued' : 'ready'}`}>
           {queuedBreak ? (
@@ -394,7 +418,7 @@ function App() {
                 className="direct-action pushups"
                 type="button"
                 onClick={() => queueDirectReps('pushups')}
-                disabled={isRolling}
+                disabled={isRolling || !preferences.enabledMovements.pushups}
               >
                 Queue {preferences.directReps} Pushups
               </button>
@@ -455,6 +479,28 @@ function App() {
             />
           </div>
 
+          <fieldset className="setting-row movement-settings">
+            <legend>Enabled exercises</legend>
+            <div className="movement-toggle-list">
+              {SETTING_MOVEMENTS.map((movement) => {
+                const isEnabled = preferences.enabledMovements[movement]
+                const isLastEnabled = isEnabled && countEnabledMovements(preferences.enabledMovements) === 1
+
+                return (
+                  <label className="movement-toggle" key={movement}>
+                    <input
+                      type="checkbox"
+                      checked={isEnabled}
+                      disabled={isLastEnabled}
+                      onChange={(event) => updateMovementEnabled(movement, event.currentTarget.checked)}
+                    />
+                    <span>{formatMovementLabel(movement)}</span>
+                  </label>
+                )
+              })}
+            </div>
+          </fieldset>
+
           <div className="sync-summary">
             <span>{currentUser ? 'Signed in' : authStatus === 'loading' ? 'Checking login' : 'Local only'}</span>
             <strong>{currentUser?.displayName ?? (authProviders.length > 0 ? 'Not signed in' : 'Login not configured')}</strong>
@@ -489,13 +535,16 @@ function App() {
 function RepOrbitRandomizer({
   completionPulse,
   displayBreak,
+  enabledMovements,
   isRolling,
 }: {
   completionPulse: boolean
   displayBreak: MovementBreak | null
+  enabledMovements: MovementPreferences['enabledMovements']
   isRolling: boolean
 }) {
   const movementClass = displayBreak ? `movement-${displayBreak.movement}` : ''
+  const orbitOptions = REP_ORBIT_OPTIONS.filter((option) => enabledMovements[option.movement])
 
   return (
     <div
@@ -510,7 +559,7 @@ function RepOrbitRandomizer({
       <div className="rep-orbit-path middle" aria-hidden="true" />
       <div className="rep-orbit-path inner" aria-hidden="true" />
       <div className="rep-orbit-options" aria-hidden="true">
-        {REP_ORBIT_OPTIONS.map((option) => {
+        {orbitOptions.map((option) => {
           const isActive = displayBreak?.movement === option.movement && displayBreak.reps === option.reps
           const dotStyle = {
             '--orbit-angle': `${option.angle}deg`,
@@ -654,8 +703,9 @@ function MovementStatsSection({
   )
 }
 
-function randomMovementBreak(): MovementBreak {
-  const movementConfig = MOVEMENT_ROLL_CONFIGS[randomIndex(MOVEMENT_ROLL_CONFIGS.length)]
+function randomMovementBreak(enabledMovements: MovementPreferences['enabledMovements']): MovementBreak {
+  const movementConfigs = MOVEMENT_ROLL_CONFIGS.filter((config) => enabledMovements[config.movement])
+  const movementConfig = movementConfigs.length > 0 ? movementConfigs[randomIndex(movementConfigs.length)] : undefined
 
   if (!movementConfig) {
     return FALLBACK_ROLL
@@ -665,6 +715,10 @@ function randomMovementBreak(): MovementBreak {
     movement: movementConfig.movement,
     reps: movementConfig.reps[randomIndex(movementConfig.reps.length)] ?? FALLBACK_ROLL.reps,
   }
+}
+
+function countEnabledMovements(enabledMovements: MovementPreferences['enabledMovements']) {
+  return Object.values(enabledMovements).filter(Boolean).length
 }
 
 function randomIndex(optionCount: number) {

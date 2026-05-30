@@ -51,6 +51,7 @@ npm run lint         # eslint
 - Fixed random rep options: pullups `3-8`, pushups `5-20` and `30`, deadlifts `3-10`
 - Random rep roll
 - Configurable direct rep preset, default `20`
+- Configurable enabled exercises for random rolls
 - Completion logging
 - Today and seven-day stats
 - Google and GitHub login

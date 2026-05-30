@@ -542,6 +542,49 @@ button:disabled {
   font-weight: 800;
 }
 
+.movement-settings {
+  margin: 16px 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.movement-settings legend {
+  margin-bottom: 8px;
+  padding: 0;
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.movement-toggle-list {
+  display: grid;
+  gap: 8px;
+}
+
+.movement-toggle {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.movement-toggle input {
+  width: 18px;
+  min-height: auto;
+  flex: 0 0 auto;
+  margin: 0;
+  accent-color: var(--green);
+}
+
+.movement-toggle:has(input:disabled) {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
 .sync-summary {
   margin-top: 16px;
   display: grid;
