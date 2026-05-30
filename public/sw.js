@@ -1,6 +1,7 @@
-const CACHE_NAME = 'movement-break-shell-v13'
+const CACHE_NAME = 'movement-break-shell-v14'
 const SHELL_ASSETS = ['/', '/manifest.webmanifest', '/icon.svg']
 const UPDATE_READY_MESSAGE = 'MOVEMENT_BREAK_UPDATE_READY'
+const SKIP_WAITING_MESSAGE = 'MOVEMENT_BREAK_SKIP_WAITING'
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -31,6 +32,12 @@ self.addEventListener('activate', (event) => {
       }
     }),
   )
+})
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === SKIP_WAITING_MESSAGE) {
+    self.skipWaiting()
+  }
 })
 
 self.addEventListener('fetch', (event) => {
