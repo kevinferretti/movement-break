@@ -397,19 +397,12 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  width: min(760px, 100%);
+  width: min(420px, 100%);
 }
 
 .break-actions.ready {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.break-actions.ready .primary-action {
-  grid-column: 1 / -1;
-  justify-self: center;
-  width: calc((100% - 24px) / 3);
-  min-width: 0;
+  grid-template-columns: minmax(96px, 0.72fr) minmax(180px, 1fr);
 }
 
 .break-actions.ready .direct-action {
@@ -848,10 +841,6 @@ input:focus-visible {
 
   .break-actions.ready {
     grid-template-columns: 1fr;
-  }
-
-  .break-actions.ready .primary-action {
-    justify-self: stretch;
   }
 
   .break-actions.queued {

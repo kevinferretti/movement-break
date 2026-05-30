@@ -398,22 +398,6 @@ function App() {
               >
                 Queue {preferences.directReps} Pushups
               </button>
-              <button
-                className="direct-action pullups"
-                type="button"
-                onClick={() => queueDirectReps('pullups')}
-                disabled={isRolling}
-              >
-                Queue {preferences.directReps} Pullups
-              </button>
-              <button
-                className="direct-action deadlifts"
-                type="button"
-                onClick={() => queueDirectReps('deadlifts')}
-                disabled={isRolling}
-              >
-                Queue {preferences.directReps} Deadlifts
-              </button>
             </>
           )}
         </div>
