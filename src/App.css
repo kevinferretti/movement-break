@@ -407,8 +407,9 @@
 
 .break-actions.ready .primary-action {
   grid-column: 1 / -1;
-  justify-self: start;
-  min-width: 128px;
+  justify-self: center;
+  width: calc((100% - 24px) / 3);
+  min-width: 0;
 }
 
 .break-actions.ready .direct-action {
