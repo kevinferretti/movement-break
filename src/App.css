@@ -402,7 +402,7 @@
 
 .break-actions.ready {
   display: grid;
-  grid-template-columns: minmax(96px, 0.72fr) minmax(180px, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .break-actions.ready .direct-action {
