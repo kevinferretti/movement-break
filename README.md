@@ -83,7 +83,7 @@ Pushes to `main` deploy to `https://movement.kevinferretti.com` through `.github
 Required GitHub repository secrets:
 
 ```text
-OVH_SSH_PRIVATE_KEY   # private deploy key for ubuntu@movement.kevinferretti.com
+OVH_SSH_PRIVATE_KEY   # private deploy key for codex@movement.kevinferretti.com
 OVH_SSH_KNOWN_HOSTS   # output from: ssh-keyscan -t ed25519 movement.kevinferretti.com
 OAUTH_GITHUB_CLIENT_ID
 OAUTH_GITHUB_CLIENT_SECRET

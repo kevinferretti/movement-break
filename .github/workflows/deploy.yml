@@ -15,7 +15,7 @@ concurrency:
 env:
   NODE_VERSION: '22'
   DEPLOY_HOST: movement.kevinferretti.com
-  DEPLOY_USER: ubuntu
+  DEPLOY_USER: codex
   DEPLOY_ROOT: /opt/movement-break
   APP_PORT: '8787'
   CLIENT_ORIGIN: https://movement.kevinferretti.com
