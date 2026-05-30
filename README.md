@@ -47,8 +47,8 @@ npm run lint         # eslint
 
 ## Current MVP
 
-- Pushups and pullups
-- Fixed random rep options: pullups `3-8`, pushups `5-20` and `30`
+- Pushups, pullups, and deadlifts
+- Fixed random rep options: pullups `3-8`, pushups `5-20` and `30`, deadlifts `3-10`
 - Random rep roll
 - Configurable direct rep preset, default `20`
 - Completion logging

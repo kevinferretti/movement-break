@@ -174,6 +174,11 @@
   --movement-soft: color-mix(in srgb, var(--green) 20%, var(--panel));
 }
 
+.rep-orbit.movement-deadlifts {
+  --movement-color: var(--blue);
+  --movement-soft: color-mix(in srgb, var(--blue) 16%, var(--panel));
+}
+
 .rep-orbit::before {
   content: '';
   position: absolute;
@@ -196,6 +201,12 @@
   width: 86%;
   height: 86%;
   border: 2px solid var(--line-strong);
+}
+
+.rep-orbit-path.middle {
+  width: 74%;
+  height: 74%;
+  border: 1px solid color-mix(in srgb, var(--blue) 26%, var(--line));
 }
 
 .rep-orbit-path.inner {
@@ -231,6 +242,10 @@
   --orbit-translate: clamp(-102px, -11.2vw, -74px);
 }
 
+.rep-orbit-dot.middle {
+  --orbit-translate: clamp(-120px, -13.3vw, -88px);
+}
+
 .rep-orbit-dot-core {
   width: 12px;
   height: 12px;
@@ -253,6 +268,12 @@
   width: 10px;
   height: 10px;
   background: var(--green);
+}
+
+.rep-orbit-dot.deadlifts .rep-orbit-dot-core {
+  width: 11px;
+  height: 11px;
+  background: var(--blue);
 }
 
 .rep-orbit-dot.active {
@@ -376,12 +397,12 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  width: min(620px, 100%);
+  width: min(760px, 100%);
 }
 
 .break-actions.ready {
   display: grid;
-  grid-template-columns: minmax(96px, 0.7fr) repeat(2, minmax(160px, 1fr));
+  grid-template-columns: minmax(86px, 0.68fr) repeat(3, minmax(130px, 1fr));
 }
 
 button {
@@ -447,6 +468,12 @@ button:disabled {
 .direct-action.pullups {
   background: var(--green);
   box-shadow: 0 12px 28px rgba(47, 143, 131, 0.16);
+}
+
+.direct-action.deadlifts {
+  color: var(--paper);
+  background: var(--blue);
+  box-shadow: 0 12px 28px rgba(53, 80, 112, 0.16);
 }
 
 .cancel-action {
@@ -569,7 +596,7 @@ input:focus-visible {
 
 .movement-tabs {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
   padding: 4px;
   border: 1px solid var(--line);

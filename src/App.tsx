@@ -15,6 +15,7 @@ import {
 import './App.css'
 import { normalizePreferences, type MovementPreferences } from './domain/preferences'
 import {
+  DEADLIFT_REPS,
   MOVEMENT_ROLL_CONFIGS,
   PULLUP_REPS,
   PUSHUP_REPS,
@@ -47,7 +48,7 @@ const FALLBACK_ROLL: MovementBreak = {
   movement: 'pushups',
   reps: 1,
 }
-const STAT_MOVEMENTS: readonly Movement[] = ['pushups', 'pullups']
+const STAT_MOVEMENTS: readonly Movement[] = ['pushups', 'pullups', 'deadlifts']
 const REP_ORBIT_OPTIONS = [
   ...PUSHUP_REPS.map((reps, index) => ({
     angle: -90 + (index * 360) / PUSHUP_REPS.length,
@@ -62,6 +63,13 @@ const REP_ORBIT_OPTIONS = [
     orbit: 'inner' as const,
     reps,
     sequence: PUSHUP_REPS.length + index,
+  })),
+  ...DEADLIFT_REPS.map((reps, index) => ({
+    angle: -75 + (index * 360) / DEADLIFT_REPS.length,
+    movement: 'deadlifts' as const,
+    orbit: 'middle' as const,
+    reps,
+    sequence: PUSHUP_REPS.length + PULLUP_REPS.length + index,
   })),
 ]
 
@@ -352,7 +360,7 @@ function App() {
 
       <section className="break-stage" aria-label="Movement break">
         <div className="movement-label">
-          <span>{displayBreak ? formatMovementLabel(displayBreak.movement) : 'Pushups or Pullups'}</span>
+          <span>{displayBreak ? formatMovementLabel(displayBreak.movement) : 'Pushups, Pullups, or Deadlifts'}</span>
         </div>
 
         <RepOrbitRandomizer displayBreak={displayBreak} isRolling={isRolling} completionPulse={completionPulse} />
@@ -397,6 +405,14 @@ function App() {
                 disabled={isRolling}
               >
                 Queue {preferences.directReps} Pullups
+              </button>
+              <button
+                className="direct-action deadlifts"
+                type="button"
+                onClick={() => queueDirectReps('deadlifts')}
+                disabled={isRolling}
+              >
+                Queue {preferences.directReps} Deadlifts
               </button>
             </>
           )}
@@ -507,6 +523,7 @@ function RepOrbitRandomizer({
       }
     >
       <div className="rep-orbit-path outer" aria-hidden="true" />
+      <div className="rep-orbit-path middle" aria-hidden="true" />
       <div className="rep-orbit-path inner" aria-hidden="true" />
       <div className="rep-orbit-options" aria-hidden="true">
         {REP_ORBIT_OPTIONS.map((option) => {

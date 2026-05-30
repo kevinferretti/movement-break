@@ -22,6 +22,12 @@ describe('normalizeImportedEntries', () => {
           reps: 5,
           completedAt: '2026-05-27T18:00:00.000Z',
         },
+        {
+          id: 'local-3',
+          movement: 'deadlifts',
+          reps: 8,
+          completedAt: '2026-05-27T19:00:00.000Z',
+        },
       ],
       new Date('2026-05-28T17:00:00.000Z'),
     )
@@ -38,6 +44,12 @@ describe('normalizeImportedEntries', () => {
         movement: 'pullups',
         reps: 5,
         completedAt: '2026-05-27T18:00:00.000Z',
+      },
+      {
+        id: 'local-3',
+        movement: 'deadlifts',
+        reps: 8,
+        completedAt: '2026-05-27T19:00:00.000Z',
       },
     ])
   })
