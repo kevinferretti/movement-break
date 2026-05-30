@@ -1,3 +1,4 @@
+import type { Movement } from '../domain/reps'
 import type { MovementEntry } from '../domain/stats'
 
 export type AuthProvider = 'github' | 'google'
@@ -35,10 +36,10 @@ export function importLocalEntriesToServer(entries: MovementEntry[]) {
   })
 }
 
-export function logServerEntry(reps: number) {
+export function logServerEntry(movement: Movement, reps: number) {
   return requestJson<{ entry: MovementEntry }>('/api/stats/entries', {
     method: 'POST',
-    body: JSON.stringify({ reps }),
+    body: JSON.stringify({ movement, reps }),
   })
 }
 

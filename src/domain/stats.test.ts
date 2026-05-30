@@ -6,7 +6,7 @@ describe('stats', () => {
     const entries: MovementEntry[] = [
       { id: '1', movement: 'pushups', reps: 10, completedAt: '2026-05-28T15:00:00.000Z' },
       { id: '2', movement: 'pushups', reps: 14, completedAt: '2026-05-28T16:00:00.000Z' },
-      { id: '3', movement: 'pushups', reps: 8, completedAt: '2026-05-27T16:00:00.000Z' },
+      { id: '3', movement: 'pullups', reps: 8, completedAt: '2026-05-27T16:00:00.000Z' },
     ]
 
     expect(summarizeEntries(entries, new Date('2026-05-28T20:00:00.000Z'))).toMatchObject({

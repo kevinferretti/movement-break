@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { isMovement, type Movement } from '../src/domain/reps'
 import type { MovementEntry } from '../src/domain/stats'
 
 export type AuthProvider = 'github' | 'google'
@@ -158,10 +159,16 @@ export function upsertUserFromOAuth(data: DatabaseFile, profile: OAuthProfile, n
   return user
 }
 
-export function createStoredEntry(userId: string, reps: number, source: StoredMovementEntry['source'], completedAt = new Date()) {
+export function createStoredEntry(
+  userId: string,
+  movement: Movement,
+  reps: number,
+  source: StoredMovementEntry['source'],
+  completedAt = new Date(),
+) {
   return {
     id: randomUUID(),
-    movement: 'pushups' as const,
+    movement,
     reps: parseReps(reps),
     completedAt: completedAt.toISOString(),
     userId,
@@ -242,9 +249,7 @@ export function normalizeImportedEntries(rawEntries: unknown, now = new Date()):
       throw new ValidationError('Entries must have unique ids.')
     }
 
-    if (entry.movement !== 'pushups') {
-      throw new ValidationError('Only pushup entries can be imported.')
-    }
+    const movement = parseMovement(entry.movement ?? 'pushups')
 
     if (Number.isNaN(completedAt.getTime()) || completedAt.getTime() > maxCompletedAt) {
       throw new ValidationError('Entries must have valid completion dates.')
@@ -254,7 +259,7 @@ export function normalizeImportedEntries(rawEntries: unknown, now = new Date()):
 
     return {
       id,
-      movement: 'pushups',
+      movement,
       reps: parseReps(entry.reps),
       completedAt: completedAt.toISOString(),
     }
@@ -275,6 +280,14 @@ export function parseReps(value: unknown) {
   }
 
   return reps
+}
+
+export function parseMovement(value: unknown) {
+  if (isMovement(value)) {
+    return value
+  }
+
+  throw new ValidationError('Movement must be pushups or pullups.')
 }
 
 function createProviderIdentity(profile: OAuthProfile): ProviderIdentity {
@@ -341,7 +354,7 @@ function isStoredMovementEntry(value: unknown): value is StoredMovementEntry {
 
   return (
     typeof entry.id === 'string' &&
-    entry.movement === 'pushups' &&
+    isMovement(entry.movement) &&
     typeof entry.reps === 'number' &&
     Number.isFinite(entry.reps) &&
     typeof entry.completedAt === 'string' &&

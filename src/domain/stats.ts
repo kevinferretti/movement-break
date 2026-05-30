@@ -1,8 +1,9 @@
 import { formatDateKey } from './time'
+import type { Movement } from './reps'
 
 export type MovementEntry = {
   id: string
-  movement: 'pushups'
+  movement: Movement
   reps: number
   completedAt: string
 }
@@ -52,10 +53,10 @@ export function buildDailyTotals(entries: MovementEntry[], days: number, now = n
   return [...totals.values()]
 }
 
-export function createMovementEntry(reps: number, completedAt = new Date()): MovementEntry {
+export function createMovementEntry(movement: Movement, reps: number, completedAt = new Date()): MovementEntry {
   return {
     id: crypto.randomUUID(),
-    movement: 'pushups',
+    movement,
     reps,
     completedAt: completedAt.toISOString(),
   }

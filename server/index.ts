@@ -11,6 +11,7 @@ import {
   createStoredEntry,
   getUserEntries,
   importLocalEntries,
+  parseMovement,
   parseReps,
   upsertUserFromOAuth,
   type StoredMovementEntry,
@@ -168,9 +169,10 @@ app.post(
       return
     }
 
+    const movement = parseMovement(request.body?.movement ?? 'pushups')
     const reps = parseReps(request.body?.reps)
     const entry = await store.update((data) => {
-      const storedEntry = createStoredEntry(user.id, reps, 'completion')
+      const storedEntry = createStoredEntry(user.id, movement, reps, 'completion')
 
       data.entries.unshift(storedEntry)
 

@@ -14,7 +14,12 @@ import {
 } from 'lucide-react'
 import './App.css'
 import { normalizePreferences, type MovementPreferences } from './domain/preferences'
-import { AVAILABLE_REPS } from './domain/reps'
+import {
+  MOVEMENT_ROLL_CONFIGS,
+  formatMovementLabel,
+  formatMovementLabelLower,
+  type Movement,
+} from './domain/reps'
 import { buildDailyTotals, createMovementEntry, summarizeEntries, type MovementEntry } from './domain/stats'
 import {
   fetchAuthConfig,
@@ -35,7 +40,15 @@ type Notice = {
 }
 
 const SOURCE_URL = 'https://github.com/kevinferretti/movement-break'
-const FALLBACK_REPS = 1
+const FALLBACK_ROLL: MovementBreak = {
+  movement: 'pushups',
+  reps: 1,
+}
+
+type MovementBreak = {
+  movement: Movement
+  reps: number
+}
 
 type PreferenceState = {
   directRepsInput: string
@@ -52,8 +65,8 @@ function App() {
       preferences,
     }
   })
-  const [rolledReps, setRolledReps] = useState<number | null>(null)
-  const [displayReps, setDisplayReps] = useState<number | null>(null)
+  const [queuedBreak, setQueuedBreak] = useState<MovementBreak | null>(null)
+  const [displayBreak, setDisplayBreak] = useState<MovementBreak | null>(null)
   const [isRolling, setIsRolling] = useState(false)
   const [isSavingCompletion, setIsSavingCompletion] = useState(false)
   const [completionPulse, setCompletionPulse] = useState(false)
@@ -154,18 +167,18 @@ function App() {
     }
 
     setIsRolling(true)
-    setRolledReps(null)
-    setDisplayReps(randomRep())
+    setQueuedBreak(null)
+    setDisplayBreak(randomMovementBreak())
     setNotice({ tone: 'neutral', text: 'Rolling...' })
 
     let ticks = 0
     const interval = window.setInterval(() => {
       ticks += 1
-      setDisplayReps(randomRep())
+      setDisplayBreak(randomMovementBreak())
 
       if (ticks >= 12) {
         window.clearInterval(interval)
-        queueReps(randomRep())
+        queueBreak(randomMovementBreak())
       }
     }, 58)
   }
@@ -175,33 +188,44 @@ function App() {
       return
     }
 
-    queueReps(preferences.directReps)
+    queueBreak({
+      movement: 'pushups',
+      reps: preferences.directReps,
+    })
   }
 
-  function queueReps(reps: number) {
-    setDisplayReps(reps)
-    setRolledReps(reps)
+  function queueBreak(breakOption: MovementBreak) {
+    setDisplayBreak(breakOption)
+    setQueuedBreak(breakOption)
     setIsRolling(false)
-    setNotice({ tone: 'success', text: `${reps} pushups queued.` })
+    setNotice({
+      tone: 'success',
+      text: `${breakOption.reps} ${formatMovementLabelLower(breakOption.movement)} queued.`,
+    })
   }
 
   async function completeBreak() {
-    if (!rolledReps || isSavingCompletion) {
+    if (!queuedBreak || isSavingCompletion) {
       return
     }
 
-    const reps = rolledReps
+    const breakOption = queuedBreak
 
     setIsSavingCompletion(true)
 
     try {
-      const entry = currentUser ? (await logServerEntry(reps)).entry : createMovementEntry(reps)
+      const entry = currentUser
+        ? (await logServerEntry(breakOption.movement, breakOption.reps)).entry
+        : createMovementEntry(breakOption.movement, breakOption.reps)
 
       setEntries((current) => [entry, ...current])
       setCompletionPulse(true)
-      setNotice({ tone: 'success', text: `Logged ${reps} pushups.` })
-      setRolledReps(null)
-      setDisplayReps(null)
+      setNotice({
+        tone: 'success',
+        text: `Logged ${breakOption.reps} ${formatMovementLabelLower(breakOption.movement)}.`,
+      })
+      setQueuedBreak(null)
+      setDisplayBreak(null)
       window.setTimeout(() => setCompletionPulse(false), 650)
     } catch (error) {
       setNotice({ tone: 'error', text: getErrorMessage(error) })
@@ -211,8 +235,8 @@ function App() {
   }
 
   function cancelQueuedBreak() {
-    setRolledReps(null)
-    setDisplayReps(null)
+    setQueuedBreak(null)
+    setDisplayBreak(null)
     setNotice({ tone: 'neutral', text: 'Skipped this roll.' })
   }
 
@@ -276,20 +300,24 @@ function App() {
         </div>
       </header>
 
-      <section className="break-stage" aria-label="Pushup break">
+      <section className="break-stage" aria-label="Movement break">
         <div className="movement-label">
-          <span>Pushups</span>
+          <span>{displayBreak ? formatMovementLabel(displayBreak.movement) : 'Pushups or Pullups'}</span>
         </div>
 
         <div
-          className={`rep-dial ${displayReps === null ? 'empty' : ''} ${isRolling ? 'rolling' : ''} ${completionPulse ? 'complete' : ''}`}
-          aria-label={displayReps === null ? 'No reps rolled yet' : `${displayReps} pushups`}
+          className={`rep-dial ${displayBreak === null ? 'empty' : ''} ${isRolling ? 'rolling' : ''} ${completionPulse ? 'complete' : ''}`}
+          aria-label={
+            displayBreak === null
+              ? 'No movement rolled yet'
+              : `${displayBreak.reps} ${formatMovementLabelLower(displayBreak.movement)}`
+          }
         >
-          <span>{displayReps ?? ''}</span>
+          <span>{displayBreak?.reps ?? ''}</span>
         </div>
 
-        <div className={`break-actions ${rolledReps ? 'queued' : 'ready'}`}>
-          {rolledReps ? (
+        <div className={`break-actions ${queuedBreak ? 'queued' : 'ready'}`}>
+          {queuedBreak ? (
             <>
               <button
                 className="complete-action"
@@ -314,7 +342,7 @@ function App() {
                 Roll
               </button>
               <button className="direct-action" type="button" onClick={queueDirectReps} disabled={isRolling}>
-                Queue {preferences.directReps}
+                Queue {preferences.directReps} Pushups
               </button>
             </>
           )}
@@ -338,7 +366,7 @@ function App() {
             <Metric label="Lifetime" value={summary.totalReps} detail={`${summary.totalBreaks} breaks`} />
           </div>
 
-          <div className="history-bars" aria-label="Seven day pushup history">
+          <div className="history-bars" aria-label="Seven day movement history">
             {dailyTotals.map((day) => (
               <div className="history-day" key={day.dateKey}>
                 <div className="bar-track">
@@ -476,16 +504,28 @@ function Metric({ label, value, detail }: { label: string; value: number; detail
   )
 }
 
-function randomRep() {
+function randomMovementBreak(): MovementBreak {
+  const movementConfig = MOVEMENT_ROLL_CONFIGS[randomIndex(MOVEMENT_ROLL_CONFIGS.length)]
+
+  if (!movementConfig) {
+    return FALLBACK_ROLL
+  }
+
+  return {
+    movement: movementConfig.movement,
+    reps: movementConfig.reps[randomIndex(movementConfig.reps.length)] ?? FALLBACK_ROLL.reps,
+  }
+}
+
+function randomIndex(optionCount: number) {
   const values = new Uint32Array(1)
-  const optionCount = AVAILABLE_REPS.length
   const unbiasedMax = 2 ** 32 - (2 ** 32 % optionCount)
 
   do {
     window.crypto.getRandomValues(values)
   } while (values[0] >= unbiasedMax)
 
-  return AVAILABLE_REPS[values[0] % optionCount] ?? FALLBACK_REPS
+  return values[0] % optionCount
 }
 
 function getErrorMessage(error: unknown) {

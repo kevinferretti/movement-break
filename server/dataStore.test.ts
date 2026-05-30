@@ -7,7 +7,7 @@ import {
 } from './dataStore'
 
 describe('normalizeImportedEntries', () => {
-  it('accepts valid local pushup entries', () => {
+  it('accepts valid local movement entries', () => {
     const entries = normalizeImportedEntries(
       [
         {
@@ -15,6 +15,12 @@ describe('normalizeImportedEntries', () => {
           movement: 'pushups',
           reps: 20,
           completedAt: '2026-05-27T17:00:00.000Z',
+        },
+        {
+          id: 'local-2',
+          movement: 'pullups',
+          reps: 5,
+          completedAt: '2026-05-27T18:00:00.000Z',
         },
       ],
       new Date('2026-05-28T17:00:00.000Z'),
@@ -26,6 +32,12 @@ describe('normalizeImportedEntries', () => {
         movement: 'pushups',
         reps: 20,
         completedAt: '2026-05-27T17:00:00.000Z',
+      },
+      {
+        id: 'local-2',
+        movement: 'pullups',
+        reps: 5,
+        completedAt: '2026-05-27T18:00:00.000Z',
       },
     ])
   })

@@ -1,4 +1,5 @@
 import { createDefaultPreferences, normalizePreferences, type MovementPreferences } from '../domain/preferences'
+import { isMovement } from '../domain/reps'
 import type { MovementEntry } from '../domain/stats'
 
 const ENTRIES_KEY = 'movement-break.entries.v1'
@@ -28,7 +29,17 @@ export function loadEntries(): MovementEntry[] {
       return []
     }
 
-    return parsed.filter(isMovementEntry)
+    const entries: MovementEntry[] = []
+
+    for (const value of parsed) {
+      const entry = normalizeMovementEntry(value)
+
+      if (entry) {
+        entries.push(entry)
+      }
+    }
+
+    return entries
   } catch {
     return []
   }
@@ -38,19 +49,27 @@ export function saveEntries(entries: MovementEntry[]) {
   window.localStorage.setItem(ENTRIES_KEY, JSON.stringify(entries))
 }
 
-function isMovementEntry(value: unknown): value is MovementEntry {
+function normalizeMovementEntry(value: unknown): MovementEntry | null {
   if (!value || typeof value !== 'object') {
-    return false
+    return null
   }
 
   const entry = value as Partial<MovementEntry>
+  const completedAt = typeof entry.completedAt === 'string' ? entry.completedAt : ''
 
-  return (
+  if (
     typeof entry.id === 'string' &&
-    entry.movement === 'pushups' &&
     typeof entry.reps === 'number' &&
     Number.isFinite(entry.reps) &&
-    typeof entry.completedAt === 'string' &&
-    !Number.isNaN(new Date(entry.completedAt).getTime())
-  )
+    !Number.isNaN(new Date(completedAt).getTime())
+  ) {
+    return {
+      id: entry.id,
+      movement: isMovement(entry.movement) ? entry.movement : 'pushups',
+      reps: entry.reps,
+      completedAt,
+    }
+  }
+
+  return null
 }
