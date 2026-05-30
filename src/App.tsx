@@ -28,6 +28,7 @@ import {
   importLocalEntriesToServer,
   logOut,
   logServerEntry,
+  subscribeToServerEntries,
   type AuthProvider,
   type CurrentUser,
 } from './lib/api'
@@ -97,6 +98,7 @@ function App() {
     [entries],
   )
   const activeMovementStats = movementStats.find((movementStat) => movementStat.movement === activeStatsMovement)
+  const currentUserId = currentUser?.id
 
   useEffect(() => {
     saveEntries(entries)
@@ -176,6 +178,21 @@ function App() {
     }
   }, [])
 
+  useEffect(() => {
+    if (!currentUserId) {
+      return
+    }
+
+    return subscribeToServerEntries({
+      onEntry: ({ entry }) => {
+        setEntries((currentEntries) => mergeEntries(currentEntries, [entry]))
+      },
+      onSync: ({ entries: serverEntries }) => {
+        setEntries((currentEntries) => mergeEntries(currentEntries, serverEntries))
+      },
+    })
+  }, [currentUserId])
+
   function rollReps() {
     if (isRolling) {
       return
@@ -233,7 +250,7 @@ function App() {
         ? (await logServerEntry(breakOption.movement, breakOption.reps)).entry
         : createMovementEntry(breakOption.movement, breakOption.reps)
 
-      setEntries((current) => [entry, ...current])
+      setEntries((currentEntries) => mergeEntries(currentEntries, [entry]))
       setCompletionPulse(true)
       setNotice({
         tone: 'success',
@@ -599,6 +616,31 @@ function randomIndex(optionCount: number) {
   } while (values[0] >= unbiasedMax)
 
   return values[0] % optionCount
+}
+
+function mergeEntries(currentEntries: MovementEntry[], incomingEntries: MovementEntry[]) {
+  let changed = false
+  const entriesById = new Map(currentEntries.map((entry) => [entry.id, entry]))
+
+  for (const incomingEntry of incomingEntries) {
+    const currentEntry = entriesById.get(incomingEntry.id)
+
+    if (
+      !currentEntry ||
+      currentEntry.movement !== incomingEntry.movement ||
+      currentEntry.reps !== incomingEntry.reps ||
+      currentEntry.completedAt !== incomingEntry.completedAt
+    ) {
+      entriesById.set(incomingEntry.id, incomingEntry)
+      changed = true
+    }
+  }
+
+  if (!changed) {
+    return currentEntries
+  }
+
+  return [...entriesById.values()].sort((left, right) => Date.parse(right.completedAt) - Date.parse(left.completedAt))
 }
 
 function getErrorMessage(error: unknown) {

@@ -24,6 +24,28 @@ export function fetchServerEntries() {
   return requestJson<{ entries: MovementEntry[] }>('/api/stats/entries')
 }
 
+export function subscribeToServerEntries({
+  onEntry,
+  onSync,
+}: {
+  onEntry: (payload: { entry: MovementEntry }) => void
+  onSync: (payload: { entries: MovementEntry[] }) => void
+}) {
+  const events = new EventSource('/api/stats/entries/stream', { withCredentials: true })
+
+  events.addEventListener('entry', (event) => {
+    onEntry(readServerEvent<{ entry: MovementEntry }>(event))
+  })
+
+  events.addEventListener('sync', (event) => {
+    onSync(readServerEvent<{ entries: MovementEntry[] }>(event))
+  })
+
+  return () => {
+    events.close()
+  }
+}
+
 export function importLocalEntriesToServer(entries: MovementEntry[]) {
   return requestJson<{
     imported: boolean
@@ -65,6 +87,10 @@ async function requestJson<Result>(path: string, init: RequestInit = {}) {
   }
 
   return response.json() as Promise<Result>
+}
+
+function readServerEvent<Result>(event: Event) {
+  return JSON.parse((event as MessageEvent<string>).data) as Result
 }
 
 async function readErrorBody(response: Response) {

@@ -31,6 +31,8 @@ const clientOrigins = (process.env.CLIENT_ORIGIN || '')
 const sessionCookieName = 'movement_break_session'
 const oauthStateCookieName = 'movement_break_oauth_state'
 const sessionMaxAgeMs = 90 * 24 * 60 * 60 * 1000
+const streamHeartbeatMs = 25 * 1000
+const entryStreams = new Map<string, Set<Response>>()
 
 if (clientOrigins.length > 0) {
   app.use(cors({ origin: clientOrigins, credentials: true }))
@@ -160,6 +162,34 @@ app.get(
   }),
 )
 
+app.get(
+  '/api/stats/entries/stream',
+  asyncRoute(async (request, response) => {
+    const user = await requireAuthenticatedUser(request, response)
+
+    if (!user) {
+      return
+    }
+
+    prepareEventStream(response)
+
+    const removeStream = addEntryStream(user.id, response)
+    const heartbeat = setInterval(() => {
+      response.write(': keep-alive\n\n')
+    }, streamHeartbeatMs)
+
+    request.on('close', () => {
+      clearInterval(heartbeat)
+      removeStream()
+    })
+
+    const data = await store.read()
+    writeServerEvent(response, 'sync', {
+      entries: getUserEntries(data, user.id).map(serializeEntry),
+    })
+  }),
+)
+
 app.post(
   '/api/stats/entries',
   asyncRoute(async (request, response) => {
@@ -182,6 +212,7 @@ app.post(
     response.status(201).json({
       entry: serializeEntry(entry),
     })
+    notifyEntryCreated(user.id, entry)
   }),
 )
 
@@ -202,6 +233,7 @@ app.post(
       entries: result.entries.map(serializeEntry),
       user: serializeUser(result.user),
     })
+    notifyEntriesSynced(user.id, result.entries)
   }),
 )
 
@@ -296,6 +328,68 @@ function serializeEntry(entry: StoredMovementEntry) {
     reps: entry.reps,
     completedAt: entry.completedAt,
   }
+}
+
+function prepareEventStream(response: Response) {
+  response.set({
+    'Cache-Control': 'no-cache, no-transform',
+    Connection: 'keep-alive',
+    'Content-Type': 'text/event-stream',
+    'X-Accel-Buffering': 'no',
+  })
+  response.flushHeaders()
+  response.write('retry: 5000\n\n')
+}
+
+function addEntryStream(userId: string, response: Response) {
+  const streams = entryStreams.get(userId) ?? new Set<Response>()
+
+  streams.add(response)
+  entryStreams.set(userId, streams)
+
+  return () => {
+    streams.delete(response)
+
+    if (streams.size === 0) {
+      entryStreams.delete(userId)
+    }
+  }
+}
+
+function notifyEntryCreated(userId: string, entry: StoredMovementEntry) {
+  const payload = {
+    entry: serializeEntry(entry),
+  }
+
+  forEachEntryStream(userId, (response) => writeServerEvent(response, 'entry', payload))
+}
+
+function notifyEntriesSynced(userId: string, entries: StoredMovementEntry[]) {
+  const payload = {
+    entries: entries.map(serializeEntry),
+  }
+
+  forEachEntryStream(userId, (response) => writeServerEvent(response, 'sync', payload))
+}
+
+function forEachEntryStream(userId: string, callback: (response: Response) => void) {
+  const streams = entryStreams.get(userId)
+
+  if (!streams) {
+    return
+  }
+
+  for (const response of streams) {
+    callback(response)
+  }
+}
+
+function writeServerEvent(response: Response, event: string, payload: unknown) {
+  if (response.writableEnded) {
+    return
+  }
+
+  response.write(`event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`)
 }
 
 function randomToken(byteLength: number) {
