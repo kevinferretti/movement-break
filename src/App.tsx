@@ -198,13 +198,13 @@ function App() {
     }, 58)
   }
 
-  function queueDirectReps() {
+  function queueDirectReps(movement: Movement) {
     if (isRolling) {
       return
     }
 
     queueBreak({
-      movement: 'pushups',
+      movement,
       reps: preferences.directReps,
     })
   }
@@ -356,8 +356,21 @@ function App() {
                 <RotateCcw size={20} />
                 Roll
               </button>
-              <button className="direct-action" type="button" onClick={queueDirectReps} disabled={isRolling}>
+              <button
+                className="direct-action"
+                type="button"
+                onClick={() => queueDirectReps('pushups')}
+                disabled={isRolling}
+              >
                 Queue {preferences.directReps} Pushups
+              </button>
+              <button
+                className="direct-action"
+                type="button"
+                onClick={() => queueDirectReps('pullups')}
+                disabled={isRolling}
+              >
+                Queue {preferences.directReps} Pullups
               </button>
             </>
           )}

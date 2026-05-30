@@ -199,7 +199,12 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  width: min(420px, 100%);
+  width: min(620px, 100%);
+}
+
+.break-actions.ready {
+  display: grid;
+  grid-template-columns: minmax(96px, 0.7fr) repeat(2, minmax(160px, 1fr));
 }
 
 button {
