@@ -6,8 +6,8 @@ describe('rep options', () => {
     expect([...PULLUP_REPS]).toEqual([3, 4, 5, 6, 7, 8])
   })
 
-  it('allows ten through twenty plus thirty pushups', () => {
-    expect([...PUSHUP_REPS]).toEqual([10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 30])
+  it('allows fifteen through thirty pushups', () => {
+    expect([...PUSHUP_REPS]).toEqual([15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30])
   })
 
   it('allows three through ten deadlifts', () => {
