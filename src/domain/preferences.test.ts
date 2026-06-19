@@ -6,7 +6,6 @@ describe('preferences', () => {
     expect(createDefaultPreferences()).toEqual({
       directReps: 20,
       enabledMovements: {
-        deadlifts: true,
         pullups: true,
         pushups: true,
       },
@@ -23,13 +22,11 @@ describe('preferences', () => {
     expect(
       normalizePreferences({
         enabledMovements: {
-          deadlifts: false,
           pullups: true,
           pushups: true,
         },
       }).enabledMovements,
     ).toEqual({
-      deadlifts: false,
       pullups: true,
       pushups: true,
     })
@@ -37,13 +34,11 @@ describe('preferences', () => {
     expect(
       normalizePreferences({
         enabledMovements: {
-          deadlifts: false,
           pullups: false,
           pushups: false,
         },
       }).enabledMovements,
     ).toEqual({
-      deadlifts: true,
       pullups: true,
       pushups: true,
     })

@@ -13,7 +13,6 @@ export const DIRECT_REP_LIMITS = {
   max: 500,
 }
 export const DEFAULT_ENABLED_MOVEMENTS: Record<Movement, boolean> = {
-  deadlifts: true,
   pullups: true,
   pushups: true,
 }
@@ -40,7 +39,6 @@ function normalizeEnabledMovements(
   fallback: Record<Movement, boolean>,
 ) {
   const enabledMovements = {
-    deadlifts: value?.deadlifts === undefined ? fallback.deadlifts : value.deadlifts === true,
     pullups: value?.pullups === undefined ? fallback.pullups : value.pullups === true,
     pushups: value?.pushups === undefined ? fallback.pushups : value.pushups === true,
   }

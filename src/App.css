@@ -174,11 +174,6 @@
   --movement-soft: color-mix(in srgb, var(--green) 20%, var(--panel));
 }
 
-.rep-orbit.movement-deadlifts {
-  --movement-color: var(--blue);
-  --movement-soft: color-mix(in srgb, var(--blue) 16%, var(--panel));
-}
-
 .rep-orbit::before {
   content: '';
   position: absolute;
@@ -201,12 +196,6 @@
   width: 86%;
   height: 86%;
   border: 2px solid var(--line-strong);
-}
-
-.rep-orbit-path.middle {
-  width: 74%;
-  height: 74%;
-  border: 1px solid color-mix(in srgb, var(--blue) 26%, var(--line));
 }
 
 .rep-orbit-path.inner {
@@ -242,10 +231,6 @@
   --orbit-translate: clamp(-102px, -11.2vw, -74px);
 }
 
-.rep-orbit-dot.middle {
-  --orbit-translate: clamp(-120px, -13.3vw, -88px);
-}
-
 .rep-orbit-dot-core {
   width: 12px;
   height: 12px;
@@ -268,12 +253,6 @@
   width: 10px;
   height: 10px;
   background: var(--green);
-}
-
-.rep-orbit-dot.deadlifts .rep-orbit-dot-core {
-  width: 11px;
-  height: 11px;
-  background: var(--blue);
 }
 
 .rep-orbit-dot.active {
@@ -473,12 +452,6 @@ button:disabled {
 .direct-action.pullups {
   background: var(--green);
   box-shadow: 0 12px 28px rgba(47, 143, 131, 0.16);
-}
-
-.direct-action.deadlifts {
-  color: var(--paper);
-  background: var(--blue);
-  box-shadow: 0 12px 28px rgba(53, 80, 112, 0.16);
 }
 
 .cancel-action {

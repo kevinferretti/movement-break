@@ -63,9 +63,15 @@ function normalizeMovementEntry(value: unknown): MovementEntry | null {
     Number.isFinite(entry.reps) &&
     !Number.isNaN(new Date(completedAt).getTime())
   ) {
+    const movement = entry.movement === undefined ? 'pushups' : isMovement(entry.movement) ? entry.movement : null
+
+    if (!movement) {
+      return null
+    }
+
     return {
       id: entry.id,
-      movement: isMovement(entry.movement) ? entry.movement : 'pushups',
+      movement,
       reps: entry.reps,
       completedAt,
     }

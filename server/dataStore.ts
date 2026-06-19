@@ -287,7 +287,7 @@ export function parseMovement(value: unknown) {
     return value
   }
 
-  throw new ValidationError('Movement must be pushups, pullups, or deadlifts.')
+  throw new ValidationError('Movement must be pushups or pullups.')
 }
 
 function createProviderIdentity(profile: OAuthProfile): ProviderIdentity {
