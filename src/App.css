@@ -199,8 +199,8 @@
 }
 
 .rep-orbit-path.inner {
-  width: 63%;
-  height: 63%;
+  width: 68%;
+  height: 68%;
   border: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
 }
 
@@ -228,7 +228,7 @@
 }
 
 .rep-orbit-dot.inner {
-  --orbit-translate: clamp(-102px, -11.2vw, -74px);
+  --orbit-translate: clamp(-111px, -12.25vw, -81px);
 }
 
 .rep-orbit-dot-core {

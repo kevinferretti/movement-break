@@ -58,7 +58,7 @@ const REP_ORBIT_OPTIONS = [
     sequence: index,
   })),
   ...PULLUP_REPS.map((reps, index) => ({
-    angle: -120 + (index * 360) / PULLUP_REPS.length,
+    angle: -116.25 + (index * 360) / PULLUP_REPS.length,
     movement: 'pullups' as const,
     orbit: 'inner' as const,
     reps,
